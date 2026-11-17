@@ -1,0 +1,21 @@
+{% with current=request.resolver_match.url_name %}
+<nav class="d-flex flex-column">
+  <div class="ap-nav-label">Main</div>
+  <a class="ap-nav-link {% if current == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+    <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
+  </a>
+  {% if request.user.role == "admin" %}
+    <div class="ap-nav-label">Management</div>
+    <a class="ap-nav-link {% if current == 'employee_list' or current == 'employee_create' or current == 'employee_edit' %}active{% endif %}" href="{% url 'employee_list' %}">
+      <i class="bi bi-people-fill"></i><span>Employees</span>
+    </a>
+    <a class="ap-nav-link {% if current == 'attendance_list' %}active{% endif %}" href="{% url 'attendance_list' %}">
+      <i class="bi bi-calendar-check-fill"></i><span>Attendance</span>
+    </a>
+    <div class="ap-nav-label">Security</div>
+    <a class="ap-nav-link {% if current == 'audit_event_list' %}active{% endif %}" href="{% url 'audit_event_list' %}">
+      <i class="bi bi-shield-check"></i><span>Audit trail</span>
+    </a>
+  {% endif %}
+</nav>
+{% endwith %}

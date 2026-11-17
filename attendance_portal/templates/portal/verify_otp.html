@@ -1,0 +1,25 @@
+{% extends "portal/avsys_base.html" %}{% block title %}Enter OTP{% endblock %}
+{% block content %}
+<h2>Enter the OTP</h2>
+<p class="sub">We sent a {{ form.otp.field.widget.attrs.maxlength }}-digit code to <b>{{ target }}</b>. It is valid for 5 minutes.</p>
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% include "portal/_fields.html" %}
+  <button class="btn" type="submit">Verify OTP</button>
+</form>
+<form method="post" action="{% url 'resend_otp' %}" class="inline">
+  {% csrf_token %}
+  <button class="linkbtn" type="submit" id="resend" {% if wait %}disabled data-wait="{{ wait }}"{% endif %}>Resend OTP</button>
+</form>
+<p class="links"><a href="{% url 'forgot_password' %}">Use a different email or number</a></p>
+<script>
+  (function () {
+    var b = document.getElementById('resend'); if (!b || !b.dataset.wait) return;
+    var n = parseInt(b.dataset.wait, 10);
+    (function tick() {
+      if (n <= 0) { b.disabled = false; b.textContent = 'Resend OTP'; return; }
+      b.textContent = 'Resend OTP in ' + n + 's'; n--; setTimeout(tick, 1000);
+    })();
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}Employees | Attendance Portal{% endblock %}
+
+{% block content %}
+<div class="emp-page">
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div><h1 class="h3 mb-1">Employees</h1><p class="text-secondary mb-0">Manage employee accounts and profiles.</p></div>
+  <a class="btn btn-primary" href="{% url 'employee_create' %}">Add Employee</a>
+</div>
+
+<!-- <style>
+  /* column spacing, same feel as the employee_list table */
+  #employeeTable.table > thead > tr > th,
+  #employeeTable.table > tbody > tr > td {
+    padding: 12px 20px;
+    font-size: 14px;
+    text-align: left;
+    vertical-align: middle;
+  }
+  #employeeTable.table > thead > tr > th { background: #f0f2f5; white-space: nowrap; }
+
+  /* Employee ID: same colour as the other cells, still clickable */
+  #employeeTable .emp-link {
+    color: inherit;
+    font-weight: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  #employeeTable .emp-link:hover { text-decoration: underline; }
+
+  /* breathing room around search / page-length / pagination */
+  .dt-container .dt-search,
+  .dt-container .dt-length { margin-bottom: 14px; }
+  .dt-container .dt-info,
+  .dt-container .dt-paging { margin-top: 14px; }
+</style> -->
+
+
+ 
+<style>
+  /* ---------- clean palette from the screenshot ----------
+     Top navbar blue -> headings, buttons, table header, modal header
+     Side navbar tint -> soft flat tints only (row stripes, hover, footers, info boxes)
+     Card and modal bodies stay white so the table is easy to read. */
+  .emp-page {
+    --emp-blue: #2271e0;          /* top navbar blue */
+    --emp-blue-dark: #1a5bc0;     /* hover shade */
+    --emp-text: #1b2b4a;          /* body text */
+    --emp-tint: #eef4fc;          /* very light sidebar tint */
+    --emp-tint-2: #dce9f9;        /* slightly stronger tint (hover) */
+    --emp-line: #cfe0f5;          /* borders */
+  }
+
+  /* heading + add button */
+  .emp-page h1 { color: var(--emp-blue); font-weight: 700; }
+  .emp-page .btn-primary {
+    --bs-btn-bg: var(--emp-blue);            --bs-btn-border-color: var(--emp-blue);
+    --bs-btn-hover-bg: var(--emp-blue-dark); --bs-btn-hover-border-color: var(--emp-blue-dark);
+    --bs-btn-active-bg: var(--emp-blue-dark); --bs-btn-active-border-color: var(--emp-blue-dark);
+    --bs-btn-focus-shadow-rgb: 34, 113, 224;
+  }
+
+  /* card: white, blue top edge, soft shadow */
+  .emp-page .card {
+    border: 1px solid var(--emp-line); border-top: 4px solid var(--emp-blue); border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(34, 113, 224, .08) !important;
+  }
+
+  /* ---------- table ---------- */
+  #employeeTable.table > thead > tr > th,
+  #employeeTable.table > tbody > tr > td {
+    padding: 12px 20px;
+    font-size: 14px;
+    text-align: left;
+    vertical-align: middle;
+  }
+  #employeeTable.table > thead > tr > th {
+    background: var(--emp-blue);
+    color: #fff;
+    white-space: nowrap;
+    border-bottom: 0;
+  }
+  #employeeTable.table {
+    --bs-table-bg: #fff;
+    --bs-table-striped-bg: var(--emp-tint);
+    --bs-table-color: var(--emp-text);
+    --bs-table-border-color: var(--emp-line);
+  }
+  #employeeTable.table > tbody > tr:hover > * { --bs-table-bg-state: var(--emp-tint-2); }
+
+  /* Employee ID: styled as a link with a small pencil icon, so it is clear it opens the edit popup */
+  #employeeTable .emp-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border-radius: 6px;
+    background: var(--emp-tint);
+    border: 1px solid var(--emp-line);
+    color: var(--emp-blue);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color .15s, color .15s, border-color .15s;
+  }
+  #employeeTable .emp-link::after {
+    content: "";
+    width: 12px; height: 12px;
+    background-color: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+    opacity: .75;
+  }
+  #employeeTable .emp-link:hover {
+    background: var(--emp-blue);
+    border-color: var(--emp-blue);
+    color: #fff;
+    text-decoration: none;
+  }
+  #employeeTable .emp-link:hover::after { opacity: 1; }
+  #employeeTable .emp-link:focus-visible { outline: 0; box-shadow: 0 0 0 .2rem rgba(34, 113, 224, .25); }
+
+  /* ---------- DataTables controls ---------- */
+  .dt-container .dt-search,
+  .dt-container .dt-length { margin-bottom: 14px; }
+  .dt-container .dt-info,
+  .dt-container .dt-paging { margin-top: 14px; }
+  .emp-page .dt-container label,
+  .emp-page .dt-container .dt-info { color: var(--emp-text); }
+  .emp-page .dt-container input,
+  .emp-page .dt-container select { border-color: var(--emp-line); border-radius: 8px; }
+  .emp-page .dt-container input:focus,
+  .emp-page .dt-container select:focus {
+    border-color: var(--emp-blue); outline: 0; box-shadow: 0 0 0 .2rem rgba(34, 113, 224, .18);
+  }
+  .emp-page .dt-container .dt-paging .dt-paging-button.current,
+  .emp-page .dt-container .dt-paging .dt-paging-button.current:hover {
+    background: var(--emp-blue) !important; border-color: var(--emp-blue) !important; color: #fff !important;
+  }
+  .emp-page .dt-container .dt-paging .dt-paging-button:hover:not(.current):not(.disabled) {
+    background: var(--emp-tint) !important; border-color: var(--emp-line) !important; color: var(--emp-blue-dark) !important;
+  }
+
+  /* ---------- edit modal ---------- */
+  .emp-page .modal-content { border: 0; border-radius: 12px; overflow: hidden; background: #fff; }
+  .emp-page .modal-header { background: var(--emp-blue); color: #fff; border-bottom: 0; }
+  .emp-page .modal-header .btn-close { filter: invert(1) grayscale(100%) brightness(200%); opacity: .85; }
+  .emp-page .modal-body .alert-secondary {
+    background: var(--emp-tint); color: var(--emp-blue); border: 1px solid var(--emp-line); font-weight: 600;
+  }
+  .emp-page .modal-body .form-label { color: var(--emp-text); font-weight: 600; }
+  .emp-page .modal-body .form-select { border-color: var(--emp-line); }
+  .emp-page .modal-body .form-select:focus {
+    border-color: var(--emp-blue); box-shadow: 0 0 0 .2rem rgba(34, 113, 224, .18);
+  }
+  .emp-page .modal-footer { background: var(--emp-tint); border-top: 1px solid var(--emp-line); }
+
+  /* success message after saving */
+  #flash .alert-success { border-left: 4px solid #2f8f5b; }
+</style>
+
+<div id="flash"></div>
+
+<div class="card shadow-sm"><div class="card-body">
+  <div class="table-responsive">
+    <table id="employeeTable" class="table table-striped align-middle" style="width:100%">
+      <thead><tr><th>Employee ID</th><th>Name</th><th>Department</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div></div>
+
+<!-- Edit modal: department and status only -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" id="editForm">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Employee</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-secondary py-2" id="modalInfo"></div>
+        <div class="alert alert-danger py-2 d-none" id="modalErrors"></div>
+
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.department.id_for_label }}">Department</label>
+          {{ form.department }}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+          {{ form.status }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // escape text so names cannot inject HTML
+  function esc(v) {
+    return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  $(function () {
+    const modal = new bootstrap.Modal(document.getElementById("editModal"));
+    const $form = $("#editForm");
+    const $errors = $("#modalErrors");
+    let editUrl = "";
+
+    /* ---------- DataTable (AJAX) ---------- */
+    const table = $("#employeeTable").DataTable({
+      pageLength: 25,
+      ajax: { url: "{% url 'employee_data' %}", dataSrc: "data", cache: false },
+      columns: [
+        {
+          data: "employee_id",
+          render: function (data, type, row) {
+            if (type !== "display" || !row.editable) { return data; }
+            return '<a href="#" class="emp-link"' +
+                   ' data-url="' + esc(row.edit_url) + '"' +
+                   ' data-empid="' + esc(row.employee_id) + '"' +
+                   ' data-name="' + esc(row.name) + '"' +
+                   ' data-department="' + esc(row.department_value) + '"' +
+                   ' data-status="' + esc(row.status) + '">' + esc(data) + '</a>';
+          }
+        },
+        { data: "name" },
+        { data: "department" },
+        {
+          data: "status_label",
+          render: function (data, type, row) {
+            if (type !== "display") { return data; }
+            const cls = row.status === "active" ? "success" : "secondary";
+            return '<span class="badge text-bg-' + cls + '">' + esc(data) + '</span>';
+          }
+        }
+      ],
+      language: { emptyTable: "No employees added yet." }
+    });
+
+    /* ---------- open modal when an Employee ID is clicked ---------- */
+    $("#employeeTable tbody").on("click", ".emp-link", function (e) {
+      e.preventDefault();
+      const d = this.dataset;
+      editUrl = d.url;
+      $("#modalInfo").text(d.empid + " - " + d.name);
+      $("#id_department").val(d.department);
+      $("#id_status").val(d.status);
+      $errors.addClass("d-none").empty();
+      modal.show();
+    });
+
+    /* ---------- save (AJAX POST) ---------- */
+    $form.on("submit", function (e) {
+      e.preventDefault();
+      $.ajax({ url: editUrl, method: "POST", data: $form.serialize() })
+        .done(function (res) {
+          modal.hide();
+          table.ajax.reload(null, false);   // refresh rows, stay on the same page
+          $("#flash").html('<div class="alert alert-success alert-dismissible fade show">' +
+            esc(res.message) + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+        })
+        .fail(function (xhr) {
+          let msg = "Could not save. Please try again.";
+          if (xhr.responseJSON && xhr.responseJSON.errors) {
+            msg = Object.values(xhr.responseJSON.errors).flat().join(" ");
+          }
+          $errors.text(msg).removeClass("d-none");
+        });
+    });
+  });
+</script>
+{% endblock %}

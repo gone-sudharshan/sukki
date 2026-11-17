@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_edit %}Edit employee{% else %}Add employee{% endif %} | Attendance Portal{% endblock %}
+
+{% block content %}
+<style>
+  
+  .emp-page {
+    --emp-blue: #2271e0;          /* top navbar blue */
+    --emp-blue-dark: #1a5bc0;     /* darker shade for hover */
+    --emp-text: #1b2b4a;          /* dark text for labels (readable on light bg) */
+    --emp-side-top: #dce6f7;      /* side navbar gradient: top */
+    --emp-side-mid: #bfe2fb;      /* middle */
+    --emp-side-bottom: #d4efe8;   /* bottom */
+    --emp-line: #a9c9ee;
+  }
+
+  .form-wrap { max-width: 860px; margin: 0 auto; }
+
+  /* page heading = top navbar colour */
+  .emp-page h1 { color: var(--emp-blue); }
+
+  /* card: side navbar gradient as background, blue top edge */
+  .emp-page .card {
+    border: 0;
+    border-top: 4px solid var(--emp-blue);
+    border-radius: 12px;
+    background: linear-gradient(180deg, var(--emp-side-top) 0%, var(--emp-side-mid) 55%, var(--emp-side-bottom) 100%);
+    box-shadow: 0 4px 14px rgba(34, 113, 224, .15) !important;
+  }
+
+  /* section headings = top navbar colour */
+  .form-section-title {
+    font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--emp-blue);
+    background: rgba(255, 255, 255, .55);
+    border-left: 4px solid var(--emp-blue);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 1rem;
+  }
+  .form-section + .form-section {
+    margin-top: 1.75rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--emp-line);
+  }
+
+  /* labels, inputs, hints */
+  .emp-page .form-label { color: var(--emp-text); }
+  .emp-page .form-control,
+  .emp-page .form-select { background-color: #fff; border-color: #b7cbe6; border-radius: 8px; padding: .55rem .75rem; }
+  .emp-page .form-control:focus,
+  .emp-page .form-select:focus {
+    border-color: var(--emp-blue);
+    box-shadow: 0 0 0 .2rem rgba(34, 113, 224, .22);
+  }
+  .emp-page .form-control.is-invalid:focus,
+  .emp-page .form-select.is-invalid:focus { box-shadow: 0 0 0 .2rem rgba(220, 53, 69, .2); }
+  .emp-page .form-text { color: #4d5f7a; }
+
+  /* the auto-generated Employee ID (read-only) */
+  .emp-page input[readonly] {
+    background-color: rgba(255, 255, 255, .6) !important;
+    color: var(--emp-blue);
+    font-weight: 600;
+  }
+
+  /* buttons */
+  .form-actions { border-top: 1px solid var(--emp-line); margin-top: 1.75rem; padding-top: 1.25rem; }
+  .emp-page .btn-primary {
+    --bs-btn-bg: var(--emp-blue);              --bs-btn-border-color: var(--emp-blue);
+    --bs-btn-hover-bg: var(--emp-blue-dark);   --bs-btn-hover-border-color: var(--emp-blue-dark);
+    --bs-btn-active-bg: var(--emp-blue-dark);  --bs-btn-active-border-color: var(--emp-blue-dark);
+    --bs-btn-disabled-bg: var(--emp-blue);     --bs-btn-disabled-border-color: var(--emp-blue);
+    --bs-btn-focus-shadow-rgb: 34, 113, 224;
+  }
+  .emp-page .btn-outline-secondary {
+    --bs-btn-color: var(--emp-blue);           --bs-btn-border-color: var(--emp-blue);
+    --bs-btn-hover-bg: #fff;                   --bs-btn-hover-color: var(--emp-blue-dark);
+    --bs-btn-hover-border-color: var(--emp-blue-dark);
+    --bs-btn-active-bg: #fff;                  --bs-btn-active-color: var(--emp-blue-dark);
+    --bs-btn-active-border-color: var(--emp-blue-dark);
+  }
+
+  /* success alert after saving */
+  #formAlert .alert-success { border-left: 4px solid #2f8f5b; }
+
+  @media (max-width: 575.98px) {
+    .form-wrap .card-body { padding: 1.1rem; }
+  }
+</style>
+
+<div class="form-wrap emp-page">
+  <div class="mb-4">
+    <h1 class="h3 mb-1">{% if is_edit %}Edit employee{% else %}Add employee{% endif %}</h1>
+    <!-- <p class="text-secondary mb-0">Deactivate former employees rather than deleting them, to preserve attendance history.</p> -->
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-4">
+
+      <!-- success / general error alerts appear here -->
+      <div id="formAlert" role="alert">
+        {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      </div>
+
+      <form method="post" id="employeeForm" novalidate>
+        {% csrf_token %}
+
+        <!-- ===== Account details ===== -->
+        <div class="form-section">
+          <h2 class="form-section-title">Account details</h2>
+          <div class="row g-3">
+            {% for field in account_fields %}
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold" for="{{ field.id_for_label }}">
+                  {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ field }}
+                <!-- {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %} -->
+                 {% if field.help_text and field.name != "password" and field.name != "password1" %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                <div class="invalid-feedback{% if field.errors %} d-block{% endif %}" data-error-for="{{ field.html_name }}">{% for error in field.errors %}{{ error }} {% endfor %}</div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- ===== Employment details ===== -->
+        <!-- <div class="form-section">
+          <h2 class="form-section-title">Employment details</h2>
+          <div class="row g-3">
+            {% for field in employment_fields %}
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold" for="{{ field.id_for_label }}">
+                  {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ field }}
+                
+                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                <div class="invalid-feedback{% if field.errors %} d-block{% endif %}" data-error-for="{{ field.html_name }}">{% for error in field.errors %}{{ error }} {% endfor %}</div>
+              </div>
+            {% endfor %}
+          </div>
+        </div> -->
+
+        <div class="form-section">
+          <h2 class="form-section-title">Employment details</h2>
+          <div class="row g-3">
+            {% for field in employment_fields %}
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold" for="{{ field.id_for_label }}">
+                  {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
+                </label>
+                {% if field.name == "status" %}
+                  {# only active employees are registered: no dropdown, status is always "active" #}
+                  <input type="text" class="form-control" id="{{ field.id_for_label }}" value="Active" readonly>
+                  <input type="hidden" name="{{ field.html_name }}" value="active">
+                {% else %}
+                  {{ field }}
+                {% endif %}
+                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                <div class="invalid-feedback{% if field.errors %} d-block{% endif %}" data-error-for="{{ field.html_name }}">{% for error in field.errors %}{{ error }} {% endfor %}</div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- ===== Actions (stack on phones, inline on larger screens) ===== -->
+        <div class="form-actions d-grid gap-2 d-sm-flex justify-content-sm-end">
+          <a class="btn btn-outline-secondary" href="{% url 'employee_list' %}">Cancel</a>
+          <button class="btn btn-primary" type="submit" id="saveBtn">
+            <span class="spinner-border spinner-border-sm me-1 d-none" id="saveSpinner" aria-hidden="true"></span>
+            <span id="saveText">Save employee</span>
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(function () {
+    const LIST_URL = "{% url 'employee_list' %}";
+    const REDIRECT_DELAY = 2000;          // success alert stays 2 seconds, then redirect
+    const $form = $("#employeeForm");
+    const $alert = $("#formAlert");
+    const $btn = $("#saveBtn");
+    const $spinner = $("#saveSpinner");
+    const $text = $("#saveText");
+    let saved = false;                    // once saved, ignore everything else
+
+    function esc(v) {
+      return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    /* ---------- show / clear errors ---------- */
+    function fieldBox(name) { return $('[data-error-for="' + name + '"]'); }
+    function fieldInput(name) { return $form.find('[name="' + name + '"]'); }
+
+    function clearField(name) {
+      fieldInput(name).removeClass("is-invalid");
+      fieldBox(name).removeClass("d-block").text("");
+    }
+    function clearAll() {
+      $form.find(".is-invalid").removeClass("is-invalid");
+      $form.find(".invalid-feedback").removeClass("d-block").text("");
+      $alert.empty();
+    }
+    function showFieldError(name, messages) {
+      fieldInput(name).addClass("is-invalid");
+      fieldBox(name).addClass("d-block").text(messages.join(" "));
+    }
+    function showAlert(type, html) {
+      $alert.html('<div class="alert alert-' + type + ' mb-3">' + html + '</div>');
+    }
+
+    // errors rendered by the server on first load (non-AJAX fallback)
+    $(".invalid-feedback.d-block").each(function () {
+      fieldInput($(this).data("error-for")).addClass("is-invalid");
+    });
+
+    /* ---------- one place that sends AJAX requests ---------- */
+    function post(extra) {
+      return $.ajax({
+        url: window.location.href,
+        method: "POST",
+        dataType: "json",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        data: $form.serialize() + "&ajax=1" + (extra || "")
+      });
+    }
+
+    /* ---------- live validation: when a field is left, check it on the server ---------- */
+    function validateField(name) {
+      post("&validate_only=1")
+        .done(function () { if (!saved) { clearField(name); } })
+        .fail(function (xhr) {
+          if (saved) { return; }
+          const errors = (xhr.responseJSON && xhr.responseJSON.errors) || {};
+          clearField(name);
+          if (errors[name]) { showFieldError(name, errors[name]); }
+        });
+    }
+
+    $form.on("focusout", "input", function (e) {
+      if (saved) { return; }
+      if (this.name === "csrfmiddlewaretoken" || this.readOnly) { return; }
+      // clicking Save also blurs the field: let the submit handle it, do not validate twice
+      if (e.relatedTarget && e.relatedTarget.id === "saveBtn") { return; }
+      // do not nag about an empty required field the user has not touched yet
+      if (!this.value && !$(this).data("touched")) { return; }
+      validateField(this.name);
+    });
+    $form.on("input change", "input, select", function () { $(this).data("touched", true); });
+    $form.on("change", "select", function () { if (!saved) { validateField(this.name); } });
+
+    /* ---------- success: alert for 2 seconds, then go to the employee list ---------- */
+    function onSuccess(message, employeeId, redirectUrl) {
+      saved = true;
+      clearAll();
+      let html = "<strong>" + esc(message || "Employee added successfully.") + "</strong>";
+      if (employeeId) { html += " Employee ID: <strong>" + esc(employeeId) + "</strong>"; }
+      html += '<div class="small mt-1">Redirecting to the employee list...</div>';
+      showAlert("success", html);
+
+      $btn.prop("disabled", true);        // stay disabled: no double submit
+      $spinner.addClass("d-none");
+      $text.text("Saved");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      setTimeout(function () { window.location.replace(redirectUrl || LIST_URL); }, REDIRECT_DELAY);
+    }
+
+    /* ---------- submit with AJAX ---------- */
+    function setLoading(on) {
+      $btn.prop("disabled", on);
+      $spinner.toggleClass("d-none", !on);
+      $text.text(on ? "Saving..." : "Save employee");
+    }
+
+    $form.on("submit", function (e) {
+      e.preventDefault();
+      if (saved) { return; }
+      clearAll();
+      setLoading(true);
+
+      post()
+        .done(function (res) {
+          onSuccess(res && res.message, res && res.employee_id, res && res.redirect_url);
+        })
+        .fail(function (xhr) {
+          // saved on the server but the reply was the employee list page, not JSON
+          if (xhr.status === 200 && xhr.responseURL && xhr.responseURL.indexOf(LIST_URL) !== -1) {
+            onSuccess();
+            return;
+          }
+          setLoading(false);
+          const errors = (xhr.responseJSON && xhr.responseJSON.errors) || null;
+          if (!errors) {
+            showAlert("danger", "Something went wrong. Please try again.");
+            return;
+          }
+          Object.keys(errors).forEach(function (name) {
+            if (name === "__all__") { showAlert("danger", esc(errors[name].join(" "))); }
+            else { showFieldError(name, errors[name]); }
+          });
+          const $first = $form.find(".is-invalid").first();
+          if ($first.length) { $first.trigger("focus"); }
+          else { window.scrollTo({ top: 0, behavior: "smooth" }); }
+        });
+    });
+  });
+</script>
+{% endblock %}

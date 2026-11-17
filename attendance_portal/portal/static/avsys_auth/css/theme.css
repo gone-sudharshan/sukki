@@ -1,0 +1,275 @@
+/* ==========================================================================
+   AvSys Attendance - theme. Change the palette ONLY in the block below.
+   Everything else (gradients, shadows, charts) follows these variables.
+   ========================================================================== */
+
+/* ---- PALETTE: Indigo / Violet + Emerald + Orange (same colours as the dashboard) ---- */
+:root {
+  --ap-blue: #4b32c4;           /* brand indigo */
+  --ap-blue-rgb: 75, 50, 196;
+  --ap-blue-dark: #3b27a3;
+  --ap-blue-deeper: #1c1a57;    /* deep indigo (top bar / banner start) */
+  --ap-blue-soft: #ece8fd;
+  --ap-accent: #6d4aeb;         /* violet */
+  --ap-accent-soft: #ece8fd;
+
+  --ap-beige: #f6f5fc;          /* page background */
+  --ap-beige-mid: #ebe8fa;      /* panels / table heads */
+  --ap-beige-dark: #c9bbf7;     /* soft violet accent */
+  --ap-beige-ink: #4b32c4;
+
+  --ap-green: #12a36b;
+  --ap-green-rgb: 18, 163, 107;
+  --ap-green-dark: #0e7f53;
+  --ap-green-soft: #dcf5e7;
+
+  --ap-warn: #d9731a;           /* late / orange */
+  --ap-warn-soft: #fdeedd;
+  --ap-warn-ink: #b45f12;
+
+  --ap-red: #dc3545;            /* absent / missing */
+  --ap-red-soft: #fde8e6;
+  --ap-red-ink: #9b2c20;
+
+  --ap-ink: #111330;
+  --ap-muted: #6b7184;
+  --ap-line: #e6e3f5;
+}
+
+:root {
+  --ap-topbar-h: 64px;
+  --ap-sidebar-w: 256px;
+
+  /* Re-map Bootstrap's palette so every component follows the theme */
+  --bs-primary: var(--ap-blue);
+  --bs-primary-rgb: var(--ap-blue-rgb);
+  --bs-success: var(--ap-green);
+  --bs-success-rgb: var(--ap-green-rgb);
+  --bs-body-bg: var(--ap-beige);
+  --bs-body-color: var(--ap-ink);
+  --bs-link-color: var(--ap-blue);
+  --bs-link-hover-color: var(--ap-blue-dark);
+  --bs-border-color: var(--ap-line);
+  --bs-secondary-color: var(--ap-muted);
+}
+
+body { background: var(--ap-beige); color: var(--ap-ink); font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+
+/* ----- Buttons --------------------------------------------------------- */
+.btn-primary {
+  --bs-btn-bg: var(--ap-blue); --bs-btn-border-color: var(--ap-blue);
+  --bs-btn-hover-bg: var(--ap-blue-dark); --bs-btn-hover-border-color: var(--ap-blue-dark);
+  --bs-btn-active-bg: var(--ap-blue-deeper); --bs-btn-active-border-color: var(--ap-blue-deeper);
+  --bs-btn-disabled-bg: var(--ap-blue); --bs-btn-disabled-border-color: var(--ap-blue);
+}
+.btn-outline-primary {
+  --bs-btn-color: var(--ap-blue); --bs-btn-border-color: var(--ap-blue);
+  --bs-btn-hover-bg: var(--ap-blue); --bs-btn-hover-border-color: var(--ap-blue);
+  --bs-btn-active-bg: var(--ap-blue-dark); --bs-btn-active-border-color: var(--ap-blue-dark);
+}
+.btn-success {
+  --bs-btn-bg: var(--ap-green); --bs-btn-border-color: var(--ap-green);
+  --bs-btn-hover-bg: var(--ap-green-dark); --bs-btn-hover-border-color: var(--ap-green-dark);
+  --bs-btn-active-bg: var(--ap-green-dark); --bs-btn-active-border-color: var(--ap-green-dark);
+}
+.btn-beige {
+  --bs-btn-color: var(--ap-blue-dark); --bs-btn-bg: #fff; --bs-btn-border-color: #fff;
+  --bs-btn-hover-color: var(--ap-blue-deeper); --bs-btn-hover-bg: var(--ap-beige-dark); --bs-btn-hover-border-color: var(--ap-beige-dark);
+  --bs-btn-active-bg: var(--ap-beige-dark); --bs-btn-active-border-color: var(--ap-beige-dark);
+  font-weight: 600;
+}
+
+/* ----- Top navigation -------------------------------------------------- */
+.ap-topbar {
+  position: sticky; top: 0; z-index: 1030;
+  height: var(--ap-topbar-h);
+  background: linear-gradient(90deg, var(--ap-blue-deeper), var(--ap-blue-dark) 45%, var(--ap-blue));
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(var(--ap-blue-rgb), .35);
+}
+.ap-topbar .ap-brand { color: #fff; text-decoration: none; font-weight: 700; letter-spacing: .2px; display: flex; align-items: center; gap: .6rem; }
+
+/* LOGO: your PNG goes in the white tile (works even if the old <i> icon is still in base.html) */
+.ap-brand-mark {
+  width: 44px; height: 44px; border-radius: 12px; flex: none;
+  background: #fff url('../img/avsys-logo.png') center / contain no-repeat;
+  background-origin: content-box; padding: 5px;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .22);
+  font-size: 0; color: transparent;
+}
+.ap-brand-mark i { display: none; }
+.ap-brand-text { font-weight: 700; font-size: 1.15rem; letter-spacing: .3px; line-height: 1; }
+.ap-brand-text small { display: block; font-size: .6rem; font-weight: 500; opacity: .8; letter-spacing: .06em; margin-top: 3px; }
+
+.ap-clock { text-align: right; line-height: 1.15; padding-right: .5rem; border-right: 1px solid rgba(255,255,255,.2); margin-right: .25rem; }
+.ap-clock .time { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.05rem; }
+.ap-clock .date { font-size: .72rem; opacity: .75; }
+.ap-punch-status { font-size: .78rem; line-height: 1.2; text-align: right; color: rgba(255,255,255,.85); }
+.ap-punch-status strong { color: #fff; font-variant-numeric: tabular-nums; }
+.btn-punch { font-weight: 600; padding: .45rem 1rem; border-radius: 999px; white-space: nowrap; }
+.ap-done-chip { background: rgba(var(--ap-green-rgb), .3); border: 1px solid rgba(255,255,255,.3); color: #fff; border-radius: 999px; padding: .4rem .9rem; font-size: .85rem; font-weight: 600; white-space: nowrap; }
+.ap-user-btn { color: #fff; border: 0; background: transparent; display: flex; align-items: center; gap: .55rem; }
+.ap-user-btn:hover, .ap-user-btn:focus { color: #fff; background: rgba(255,255,255,.12); }
+.ap-avatar {
+  width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex: none;
+  background: #fff; color: var(--ap-blue); font-weight: 700; font-size: .85rem;
+}
+.ap-avatar.soft { background: var(--ap-blue-soft); color: var(--ap-blue); width: 34px; height: 34px; }
+.ap-toggler { color: #fff; border: 1px solid rgba(255,255,255,.35); }
+
+/* ----- Layout / sidebar ------------------------------------------------ */
+.ap-shell { display: flex; min-height: calc(100vh - var(--ap-topbar-h)); }
+.ap-sidebar {
+  width: var(--ap-sidebar-w); flex: none;
+  background: var(--ap-beige-mid); border-right: 1px solid var(--ap-line);
+  position: sticky; top: var(--ap-topbar-h); height: calc(100vh - var(--ap-topbar-h));
+  padding: 1.25rem .9rem; overflow-y: auto;
+}
+.ap-nav-label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ap-beige-ink); opacity: .8; padding: 0 .75rem; margin: 1rem 0 .4rem; }
+.ap-nav-link {
+  display: flex; align-items: center; gap: .7rem; padding: .65rem .85rem; border-radius: 10px;
+  color: var(--ap-blue-dark); text-decoration: none; font-weight: 500; margin-bottom: .2rem; transition: background .15s;
+}
+.ap-nav-link i { font-size: 1.1rem; width: 1.3rem; text-align: center; }
+.ap-nav-link:hover { background: rgba(var(--ap-blue-rgb), .1); color: var(--ap-blue-dark); }
+.ap-nav-link.active { background: var(--ap-blue); color: #fff; box-shadow: 0 3px 8px rgba(var(--ap-blue-rgb), .3); }
+.ap-main { flex: 1; min-width: 0; padding: 1.5rem; }
+@media (min-width: 992px) { .ap-main { padding: 1.75rem 2rem; } }
+.offcanvas.ap-offcanvas { background: var(--ap-beige-mid); }
+
+/* ----- Cards ----------------------------------------------------------- */
+.card { border: 1px solid var(--ap-line); border-radius: 14px; background: #fff; box-shadow: 0 2px 8px rgba(var(--ap-blue-rgb), .08); }
+.card-header-plain { background: transparent; border-bottom: 1px solid var(--ap-line); padding: 1rem 1.25rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+.page-title { font-weight: 700; color: var(--ap-blue-dark); }
+
+/* Hero greeting */
+.ap-hero {
+  border: 0; border-radius: 18px; color: #fff; overflow: hidden; position: relative;
+  background: linear-gradient(120deg, var(--ap-blue-deeper) 0%, var(--ap-blue) 100%);
+  box-shadow: 0 8px 22px rgba(var(--ap-blue-rgb), .3);
+}
+.ap-hero::after { content: ""; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,.14); }
+.ap-hero::before { content: ""; position: absolute; right: 90px; bottom: -80px; width: 160px; height: 160px; border-radius: 50%; background: rgba(var(--ap-green-rgb), .35); }
+.ap-hero .lead-line { opacity: .9; max-width: 620px; }
+.ap-chip { display: inline-flex; align-items: center; gap: .4rem; padding: .3rem .8rem; border-radius: 999px; font-size: .8rem; font-weight: 600; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3); color: #fff; }
+.ap-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ap-warn); }
+.ap-chip .dot.green { background: #6ee7b7; }
+
+/* Stat cards */
+.stat-card { height: 100%; position: relative; overflow: hidden; }
+.stat-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--accent); }
+.stat-card .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 1.4rem; background: var(--accent-soft); color: var(--accent); }
+.stat-card .stat-value { font-size: 2rem; font-weight: 700; line-height: 1.1; color: var(--ap-ink); }
+.stat-card .stat-label { font-size: .82rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ap-muted); }
+.stat-card .stat-sub { font-size: .82rem; color: var(--ap-muted); }
+.stat-blue  { --accent: var(--ap-blue);     --accent-soft: var(--ap-blue-soft); }
+.stat-green { --accent: var(--ap-green);    --accent-soft: var(--ap-green-soft); }
+.stat-beige { --accent: var(--ap-warn-ink); --accent-soft: var(--ap-warn-soft); }
+
+.progress { background: var(--ap-blue-soft); border-radius: 999px; }
+.progress-bar { background: linear-gradient(90deg, var(--ap-accent), var(--ap-blue)); border-radius: 999px; }
+.progress-bar.green { background: var(--ap-green); }
+
+/* Lists */
+.person-row { display: flex; align-items: center; gap: .75rem; padding: .65rem 0; border-bottom: 1px dashed var(--ap-line); }
+.person-row:last-child { border-bottom: 0; }
+.feed-icon { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 1rem; }
+.feed-in  { background: var(--ap-green-soft); color: var(--ap-green); }
+.feed-out { background: var(--ap-blue-soft); color: var(--ap-blue); }
+.empty-state { text-align: center; color: var(--ap-muted); padding: 1.75rem 1rem; }
+.empty-state i { font-size: 1.8rem; color: var(--ap-beige-dark); display: block; margin-bottom: .35rem; }
+
+/* Badges / tables */
+.badge-soft-green { background: var(--ap-green-soft); color: var(--ap-green-dark); font-weight: 600; }
+.badge-soft-beige { background: var(--ap-warn-soft); color: var(--ap-warn-ink); font-weight: 600; }
+.badge-soft-blue  { background: var(--ap-blue-soft); color: var(--ap-blue-dark); font-weight: 600; }
+.badge-soft-red   { background: var(--ap-red-soft); color: var(--ap-red-ink); font-weight: 600; }
+.table { --bs-table-striped-bg: rgba(var(--ap-blue-rgb), .04); --bs-table-hover-bg: rgba(var(--ap-blue-rgb), .08); }
+.table > thead th { background: var(--ap-beige-mid); color: var(--ap-blue-dark); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; border-bottom: 0; }
+.alert { border-radius: 12px; border: 0; }
+.alert-success { background: var(--ap-green-soft); color: var(--ap-green-dark); }
+.alert-danger  { background: var(--ap-red-soft); color: var(--ap-red-ink); }
+.alert-info    { background: var(--ap-blue-soft); color: var(--ap-blue-dark); }
+.form-control:focus, .form-select:focus { border-color: var(--ap-blue); box-shadow: 0 0 0 .2rem rgba(var(--ap-blue-rgb), .18); }
+.page-link { color: var(--ap-blue); }
+.active > .page-link { background: var(--ap-blue); border-color: var(--ap-blue); }
+
+/* Login */
+.login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 1rem; background: linear-gradient(135deg, var(--ap-beige) 0%, var(--ap-beige-mid) 100%); }
+.login-card { max-width: 860px; width: 100%; border-radius: 20px; overflow: hidden; border: 0; box-shadow: 0 18px 40px rgba(var(--ap-blue-rgb), .22); }
+.login-side { background: linear-gradient(150deg, var(--ap-blue-deeper), var(--ap-blue)); color: #fff; padding: 2.5rem; position: relative; overflow: hidden; }
+.login-side::after { content: ""; position: absolute; right: -50px; bottom: -50px; width: 190px; height: 190px; border-radius: 50%; background: rgba(var(--ap-green-rgb), .45); }
+.login-logo {
+  width: 84px; height: 84px; border-radius: 22px; margin-bottom: 1rem;
+  background: #fff url('../img/avsys-logo.png') center / contain no-repeat; background-origin: content-box; padding: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.22);
+}
+.login-card input[type="text"], .login-card input[type="password"] { display: block; width: 100%; padding: .6rem .85rem; border: 1px solid var(--ap-line); border-radius: .5rem; background: #fff; }
+.login-card input:focus { outline: 0; border-color: var(--ap-blue); box-shadow: 0 0 0 .2rem rgba(var(--ap-blue-rgb), .18); }
+
+@media (max-width: 575.98px) {
+  .ap-clock { display: none; }
+  .btn-punch .label { display: none; }
+  .stat-card .stat-value { font-size: 1.6rem; }
+}
+
+/* ==========================================================================
+   COLOUR COMBINATIONS - switch by setting  <html data-theme="NAME">  in base.html
+   (no attribute = the default Indigo / Violet palette at the top of this file)
+   NAMES: ocean | royal | gold | plum | forest
+   ========================================================================== */
+
+/* ocean: teal + mint + coral */
+:root[data-theme="ocean"] {
+  --ap-blue: #0e7490; --ap-blue-rgb: 14, 116, 144; --ap-blue-dark: #155e75; --ap-blue-deeper: #083344; --ap-blue-soft: #e0f5fa;
+  --ap-accent: #22b8cf; --ap-accent-soft: #e0f5fa;
+  --ap-beige: #f1fafc; --ap-beige-mid: #dff1f5; --ap-beige-dark: #7dd3e8; --ap-beige-ink: #0e7490;
+  --ap-green: #16a34a; --ap-green-rgb: 22, 163, 74; --ap-green-dark: #15803d; --ap-green-soft: #dcfce7;
+  --ap-warn: #f0654f; --ap-warn-soft: #ffe7e2; --ap-warn-ink: #b23a27;
+  --ap-red: #dc2626; --ap-red-soft: #fee2e2; --ap-red-ink: #991b1b;
+  --ap-ink: #0f2a33; --ap-muted: #5b7680; --ap-line: #d3e8ee;
+}
+
+/* royal: royal blue + sky + green (matches the login background image) */
+:root[data-theme="royal"] {
+  --ap-blue: #1747c4; --ap-blue-rgb: 23, 71, 196; --ap-blue-dark: #0f3a9c; --ap-blue-deeper: #0b2a6f; --ap-blue-soft: #e6f0ff;
+  --ap-accent: #38a8f5; --ap-accent-soft: #e6f0ff;
+  --ap-beige: #f2f8ff; --ap-beige-mid: #e3eefc; --ap-beige-dark: #8fc4ff; --ap-beige-ink: #1747c4;
+  --ap-green: #16a974; --ap-green-rgb: 22, 169, 116; --ap-green-dark: #0f8a5c; --ap-green-soft: #dcf7ea;
+  --ap-warn: #f5b942; --ap-warn-soft: #fff4d9; --ap-warn-ink: #9a6a07;
+  --ap-red: #dc3545; --ap-red-soft: #fde8e6; --ap-red-ink: #9b2c20;
+  --ap-ink: #1c2b4a; --ap-muted: #64748b; --ap-line: #d9e6f9;
+}
+
+/* gold: midnight navy + gold + green */
+:root[data-theme="gold"] {
+  --ap-blue: #1e3a8a; --ap-blue-rgb: 30, 58, 138; --ap-blue-dark: #172554; --ap-blue-deeper: #0b1226; --ap-blue-soft: #e5ebfb;
+  --ap-accent: #d4a437; --ap-accent-soft: #faf0d2;
+  --ap-beige: #faf8f2; --ap-beige-mid: #f0ebdc; --ap-beige-dark: #e3c779; --ap-beige-ink: #1e3a8a;
+  --ap-green: #16a34a; --ap-green-rgb: 22, 163, 74; --ap-green-dark: #166534; --ap-green-soft: #dcf5e4;
+  --ap-warn: #d4a437; --ap-warn-soft: #faf0d2; --ap-warn-ink: #7a5a0c;
+  --ap-red: #dc3545; --ap-red-soft: #fde8e6; --ap-red-ink: #9b2c20;
+  --ap-ink: #151b2e; --ap-muted: #6a7088; --ap-line: #e8e1cc;
+}
+
+/* plum: plum + orchid + emerald */
+:root[data-theme="plum"] {
+  --ap-blue: #86198f; --ap-blue-rgb: 134, 25, 143; --ap-blue-dark: #701a75; --ap-blue-deeper: #3b0a45; --ap-blue-soft: #fae8ff;
+  --ap-accent: #d946ef; --ap-accent-soft: #fae8ff;
+  --ap-beige: #fdf6fe; --ap-beige-mid: #f6e6f8; --ap-beige-dark: #e9b3f0; --ap-beige-ink: #86198f;
+  --ap-green: #059669; --ap-green-rgb: 5, 150, 105; --ap-green-dark: #047857; --ap-green-soft: #d1fae5;
+  --ap-warn: #ea8a1a; --ap-warn-soft: #fff0d9; --ap-warn-ink: #9a5a07;
+  --ap-red: #dc2626; --ap-red-soft: #fee2e2; --ap-red-ink: #991b1b;
+  --ap-ink: #2a1030; --ap-muted: #7a6a80; --ap-line: #efdcf2;
+}
+
+/* forest: deep teal-green + lime + amber */
+:root[data-theme="forest"] {
+  --ap-blue: #0f766e; --ap-blue-rgb: 15, 118, 110; --ap-blue-dark: #115e59; --ap-blue-deeper: #042f2e; --ap-blue-soft: #ccfbf1;
+  --ap-accent: #14b8a6; --ap-accent-soft: #ccfbf1;
+  --ap-beige: #f2fbf9; --ap-beige-mid: #dff5f1; --ap-beige-dark: #7fd8cb; --ap-beige-ink: #0f766e;
+  --ap-green: #65a30d; --ap-green-rgb: 101, 163, 13; --ap-green-dark: #4d7c0f; --ap-green-soft: #ecfccb;
+  --ap-warn: #f59e0b; --ap-warn-soft: #fef3c7; --ap-warn-ink: #92400e;
+  --ap-red: #dc2626; --ap-red-soft: #fee2e2; --ap-red-ink: #991b1b;
+  --ap-ink: #10302d; --ap-muted: #5f7b77; --ap-line: #d3e9e5;
+}

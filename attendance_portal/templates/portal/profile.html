@@ -1,0 +1,746 @@
+{% extends "base.html" %}
+{% block title %}User Profile | Attendance Portal{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css">
+<style>
+  /* ===== Cute profile UI: uses the same palette variables as base.html (--ap-*) ===== */
+  .pf-wrap { max-width: 1180px; margin: 0 auto; }
+  .pf-card, .pf-header { background: #fff; border: 1px solid var(--ap-line); border-radius: 24px; box-shadow: 0 10px 28px rgba(var(--ap-blue-rgb), .08); }
+
+  /* ---------- Header ---------- */
+  .pf-header { overflow: hidden; margin-bottom: 1.5rem; animation: pfRise .5s cubic-bezier(.2,.8,.2,1) both; }
+  .pf-banner { position: relative; height: 90px; overflow: hidden;
+    background: linear-gradient(120deg, var(--ap-blue) 0%, color-mix(in srgb, var(--ap-blue) 45%, var(--ap-accent)) 60%, var(--ap-accent) 100%); }
+  .pf-banner::before { content: ""; position: absolute; right: -50px; top: -80px; width: 260px; height: 260px; border-radius: 50%; background: rgba(255,255,255,.16); }
+  .pf-banner::after  { content: ""; position: absolute; left: 22%; bottom: -90px; width: 190px; height: 190px; border-radius: 50%; background: rgba(var(--ap-green-rgb), .30); }
+  .pf-header-body { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1.5rem; padding: 0 2rem 1.75rem; margin-top: -56px; position: relative; z-index: 1; }
+  .pf-avatar-wrap { position: relative; flex-shrink: 0; }
+  .pf-avatar { width: 120px; height: 120px; border-radius: 50%; border: 6px solid #fff; background: linear-gradient(135deg, var(--ap-blue-soft), var(--ap-accent-soft)); color: var(--ap-blue); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; box-shadow: 0 0 0 4px var(--ap-accent-soft), 0 10px 24px rgba(var(--ap-blue-rgb), .22); overflow: hidden; }
+  .pf-avatar-btn { padding: 0; font-family: inherit; cursor: pointer; appearance: none; transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s; }
+  .pf-avatar-btn:hover { transform: scale(1.06) rotate(-2deg); box-shadow: 0 0 0 4px var(--ap-accent), 0 14px 28px rgba(var(--ap-blue-rgb), .3); }
+  .pf-avatar-btn:focus-visible { outline: 3px solid rgba(var(--ap-blue-rgb), .45); outline-offset: 4px; }
+  .pf-viewer { background: transparent; border: 0; align-items: center; }
+  .pf-viewer img { max-width: 100%; max-height: 80vh; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.45); background: #fff; }
+  .pf-viewer-close { position: absolute; top: -14px; right: -6px; z-index: 2; width: 38px; height: 38px; border: 0; border-radius: 50%; background: #fff; color: var(--ap-ink); font-size: 1.4rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,.3); transition: transform .25s; }
+  .pf-viewer-close:hover { transform: rotate(90deg); }
+  .pf-avatar img, .pf-photo-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pf-avatar-badge { position: absolute; right: 6px; bottom: 8px; width: 30px; height: 30px; border-radius: 50%; border: 3px solid #fff; background: var(--ap-green); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(var(--ap-green-rgb), .4); }
+  .pf-avatar-badge.inactive { background: var(--ap-muted); box-shadow: none; }
+  .pf-info { flex: 1; min-width: 220px; padding-bottom: .25rem; }
+  .pf-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  .pf-badges { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+  .pf-badge { display: inline-flex; align-items: center; gap: .4rem; background: var(--ap-blue-soft); color: var(--ap-blue-dark); border-radius: 999px; padding: .38rem .9rem; font-size: .85rem; font-weight: 600; }
+  .pf-badge .bx { font-size: 1.05rem; }
+  .pf-badges .pf-badge:nth-of-type(3) { background: var(--ap-sky-soft); color: var(--ap-sky-ink); }
+  .pf-badges .pf-badge:nth-of-type(4) { background: var(--ap-warn-soft); color: var(--ap-warn-ink); }
+  .pf-role { display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px; padding: .38rem 1rem; font-size: .82rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .pf-role.admin { background: var(--ap-warn-soft); color: var(--ap-warn-ink); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ap-warn) 35%, #fff); }
+  .pf-role.employee { background: var(--ap-green-soft); color: var(--ap-green-dark); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ap-green) 30%, #fff); }
+
+  /* ---------- Layout ---------- */
+  @media (max-width: 991.98px) { .pf-header-body { padding: 0 1.25rem 1.5rem; } }
+  .pf-card { padding: 1.5rem; margin-bottom: 1.5rem; animation: pfRise .5s cubic-bezier(.2,.8,.2,1) both; }
+  .pf-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; align-items: stretch; margin-bottom: 1.5rem; }
+  .pf-two > .pf-card { margin-bottom: 0; }
+  .pf-stats-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+  .pf-stats-row .pf-stat { margin-top: 0; }
+  @media (max-width: 767.98px) {
+    .pf-two { grid-template-columns: 1fr; }
+    .pf-stats-row { grid-template-columns: 1fr; }
+  }
+  .pf-card-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: 1rem; border-bottom: 2px dotted var(--ap-line); }
+  .pf-card-head + .pf-row, .pf-card-head + .pf-stats-row { border-top: 0; }
+  .pf-card-head + .pf-stats-row { margin-top: 1.1rem; }
+  .pf-card-title { display: flex; align-items: center; gap: .7rem; margin: 0; font-size: 1.08rem; font-weight: 700; color: var(--ap-ink); }
+  .pf-title-icon { width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: var(--ap-blue-soft); color: var(--ap-blue); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; box-shadow: 0 3px 8px rgba(var(--ap-blue-rgb), .12); }
+  .pf-two > .pf-card:nth-child(1) .pf-title-icon { background: var(--ap-green-soft); color: var(--ap-green); }
+  .pf-two > .pf-card:nth-child(2) .pf-title-icon { background: var(--ap-sky-soft); color: var(--ap-sky-ink); }
+  .pf-edit-btn { display: inline-flex; align-items: center; gap: .4rem; border: 0; background: linear-gradient(135deg, var(--ap-blue), color-mix(in srgb, var(--ap-blue) 55%, var(--ap-accent))); color: #fff; border-radius: 999px; padding: .5rem 1.1rem; font-weight: 600; font-size: .9rem; box-shadow: 0 6px 14px rgba(var(--ap-blue-rgb), .28); transition: transform .2s, box-shadow .2s, filter .2s; }
+  .pf-badges .pf-edit-btn { padding: .38rem 1.05rem; font-size: .85rem; }
+  .pf-edit-btn .bx { transition: transform .25s; }
+  .pf-edit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(var(--ap-blue-rgb), .36); filter: brightness(1.05); color: #fff; }
+  .pf-edit-btn:hover .bx { transform: rotate(-14deg) scale(1.2); }
+  @keyframes pfRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- Detail rows ---------- */
+  
+  .pf-row:hover { background: var(--ap-page); }
+  .pf-row-icon { width: 42px; height: 42px; flex-shrink: 0; border-radius: 14px; background: var(--ap-blue-soft); color: var(--ap-blue); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+  .pf-scroll > .pf-row:nth-child(4n+2) .pf-row-icon { background: var(--ap-green-soft); color: var(--ap-green); }
+  .pf-scroll > .pf-row:nth-child(4n+3) .pf-row-icon { background: var(--ap-sky-soft);   color: var(--ap-sky-ink); }
+  .pf-scroll > .pf-row:nth-child(4n+4) .pf-row-icon { background: var(--ap-warn-soft);  color: var(--ap-warn-ink); }
+  .pf-label { font-size: .78rem; color: var(--ap-muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+  .pf-value { font-weight: 600; color: var(--ap-ink); word-break: break-word; }
+
+  /* ---------- Activity ---------- */
+  .pf-act-icon { width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 3px 8px rgba(var(--ap-blue-rgb), .10); }
+  .pf-act-icon.blue   { background: var(--ap-blue-soft);  color: var(--ap-blue); }
+  .pf-act-icon.green  { background: var(--ap-green-soft); color: var(--ap-green); }
+  .pf-act-icon.orange { background: var(--ap-warn-soft);  color: var(--ap-warn-ink); }
+  .pf-act-icon.purple { background: var(--ap-sky-soft);   color: var(--ap-sky-ink); }
+  .pf-scroll { max-height: 240px; overflow-y: auto; margin-right: -.5rem; padding-right: .5rem; scrollbar-width: thin; scrollbar-color: var(--ap-beige-dark) transparent; }
+  .pf-scroll::-webkit-scrollbar { width: 6px; }
+  .pf-scroll::-webkit-scrollbar-track { background: transparent; }
+  .pf-scroll::-webkit-scrollbar-thumb { background: var(--ap-beige-dark); border-radius: 999px; }
+  .pf-scroll::-webkit-scrollbar-thumb:hover { background: var(--ap-blue); }
+  .pf-scroll:focus-visible { outline: 2px solid rgba(var(--ap-blue-rgb), .4); outline-offset: 2px; border-radius: .75rem; }
+  .pf-scroll > .pf-row:first-child { border-top: 0; }
+  .pf-two .pf-card { padding: 1.1rem 1.25rem; }
+  .pf-two .pf-card-head { padding-bottom: .75rem; }
+  .pf-two .pf-card-title { font-size: 1rem; }
+  .pf-two .pf-title-icon { width: 34px; height: 34px; font-size: 1.1rem; }
+  .pf-two .pf-row { gap: .8rem; padding: .55rem .6rem; }
+  .pf-two .pf-row-icon, .pf-two .pf-act-icon { width: 36px; height: 36px; font-size: 1.05rem; }
+  .pf-two .pf-value { font-size: .92rem; }
+  .pf-two .pf-label { font-size: .72rem; }
+
+  /* ---------- Stats ---------- */
+  .pf-stat { display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.2rem; border-radius: 20px; margin-top: .75rem; position: relative; overflow: hidden; transition: transform .2s, box-shadow .2s; }
+  .pf-stat::after { content: ""; position: absolute; right: -28px; top: -28px; width: 90px; height: 90px; border-radius: 50%; background: rgba(255,255,255,.55); }
+  .pf-stat:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(var(--ap-blue-rgb), .12); }
+  .pf-stat.blue   { background: linear-gradient(135deg, var(--ap-blue-soft),  color-mix(in srgb, var(--ap-blue) 6%, #fff)); }
+  .pf-stat.orange { background: linear-gradient(135deg, var(--ap-warn-soft),  color-mix(in srgb, var(--ap-warn) 6%, #fff)); }
+  .pf-stat.green  { background: linear-gradient(135deg, var(--ap-green-soft), color-mix(in srgb, var(--ap-green) 6%, #fff)); }
+  .pf-stat-icon { width: 50px; height: 50px; flex-shrink: 0; border-radius: 16px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; box-shadow: 0 6px 14px rgba(var(--ap-blue-rgb), .12); position: relative; z-index: 1; }
+  .pf-stat.blue .pf-stat-icon { color: var(--ap-blue); } .pf-stat.orange .pf-stat-icon { color: var(--ap-warn); } .pf-stat.green .pf-stat-icon { color: var(--ap-green); }
+  .pf-stat > div:last-child { position: relative; z-index: 1; }
+  .pf-stat-value { font-size: 1.6rem; font-weight: 800; line-height: 1.15; color: var(--ap-ink); }
+  .pf-stat-label { font-size: .85rem; color: var(--ap-muted); font-weight: 500; }
+
+  /* ---------- Edit modal ---------- */
+  .pf-modal .modal-content { border: 0; border-radius: 26px; box-shadow: 0 28px 70px rgba(var(--ap-blue-rgb), .28); overflow: hidden; background: var(--ap-page); }
+  .pf-modal.fade .modal-dialog { transform: translateY(28px) scale(.97); transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .25s; }
+  .pf-modal.show .modal-dialog { transform: none; }
+  .pf-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.15rem 1.5rem; background: linear-gradient(120deg, var(--ap-blue-soft), var(--ap-accent-soft)); border-bottom: 1px solid var(--ap-line); }
+  .pf-modal-titlebox { display: flex; align-items: center; gap: .8rem; }
+  .pf-modal-titlebox h3 { margin: 0; font-size: 1.12rem; font-weight: 800; color: var(--ap-ink); }
+  .pf-modal-titlebox p { margin: 0; font-size: .82rem; color: var(--ap-muted); }
+  .pf-close { border: 0; background: #fff; color: var(--ap-muted); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; box-shadow: 0 3px 8px rgba(var(--ap-blue-rgb), .12); transition: transform .25s, background .2s, color .2s; }
+  .pf-close:hover { background: var(--ap-red-soft); color: var(--ap-red-ink); transform: rotate(90deg); }
+  .pf-modal .modal-body { padding: 1.25rem 1.5rem; }
+  .pf-modal .modal-footer { background: #fff; border-top: 1px solid var(--ap-line); padding: .9rem 1.5rem; gap: .6rem; }
+
+  .pf-panel { background: #fff; border: 1px solid var(--ap-line); border-radius: 20px; padding: 1.15rem 1.25rem; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(var(--ap-blue-rgb), .05); }
+  .pf-panel:last-child { margin-bottom: 0; }
+  .pf-panel-title { display: flex; align-items: center; gap: .55rem; margin: 0 0 1rem; font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--ap-blue-dark); }
+  .pf-panel-title .bx { font-size: 1.1rem; color: var(--ap-blue); background: var(--ap-blue-soft); border-radius: 8px; padding: 4px; }
+
+  .pf-form-label { display: block; margin-bottom: .35rem; font-size: .84rem; font-weight: 600; color: var(--ap-ink); }
+  .pf-input { position: relative; }
+  .pf-input > .bx { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); font-size: 1.15rem; color: var(--ap-beige-dark); pointer-events: none; transition: color .2s; }
+  .pf-input:focus-within > .bx { color: var(--ap-blue); }
+  .pf-input .form-control { width: 100%; padding: .65rem .9rem .65rem 2.7rem; border: 1.5px solid var(--ap-line); border-radius: 14px; background: #fff; font-size: .95rem; transition: border-color .2s, box-shadow .2s, background .2s; }
+  .pf-input .form-control:focus { outline: none; border-color: var(--ap-accent); box-shadow: 0 0 0 4px rgba(var(--ap-accent-rgb), .22); }
+  .pf-input .form-control.is-invalid { border-color: var(--ap-red); background-image: none; box-shadow: 0 0 0 4px rgba(229,86,109,.10); }
+  .pf-input.locked .form-control { background: var(--ap-beige-mid); cursor: not-allowed; padding-right: 2.4rem; }
+  .pf-black, .pf-black .form-control, .pf-black .form-control[disabled] { color: var(--ap-ink); -webkit-text-fill-color: var(--ap-ink); opacity: 1; }
+  .pf-input .pf-lock-ico { position: absolute; left: auto; right: .9rem; color: var(--ap-beige-dark); }
+  .pf-hint { font-size: .78rem; color: var(--ap-muted); margin-top: .35rem; }
+  .pf-error { display: flex; align-items: center; gap: .3rem; color: var(--ap-red-ink); font-size: .84rem; margin-top: .35rem; }
+  .pf-alert { background: var(--ap-red-soft); color: var(--ap-red-ink); border: 1px solid color-mix(in srgb, var(--ap-red) 30%, #fff); border-radius: 14px; padding: .65rem .9rem; font-size: .9rem; margin-bottom: 1rem; }
+
+  /* ---------- Photo card ---------- */
+  .pf-photo-card { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+  .pf-photo-pick { position: relative; display: block; width: 100px; height: 100px; flex-shrink: 0; border-radius: 50%; cursor: pointer; margin: 0; padding: 0; border: 0; background: none; }
+  .pf-photo-preview { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg, var(--ap-blue-soft), var(--ap-accent-soft)); color: var(--ap-blue); font-size: 2rem; font-weight: 700; border: 4px solid #fff; box-shadow: 0 0 0 3px var(--ap-accent-soft), 0 6px 16px rgba(var(--ap-blue-rgb), .2); transition: filter .2s; }
+  .pf-photo-pick:hover .pf-photo-preview { filter: brightness(.92); }
+  .pf-photo-cam { position: absolute; right: -2px; bottom: -2px; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--ap-blue), var(--ap-accent)); color: #fff; border: 3px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: transform .2s; }
+  .pf-photo-pick:hover .pf-photo-cam { transform: scale(1.14) rotate(-8deg); }
+  .pf-photo-card input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+  .pf-photo-meta { flex: 1; min-width: 220px; }
+  .pf-photo-meta h4 { margin: 0 0 .15rem; font-size: 1rem; font-weight: 700; color: var(--ap-ink); }
+  .pf-photo-note { font-size: .82rem; color: var(--ap-muted); margin: 0 0 .7rem; }
+  .pf-photo-note.err { color: var(--ap-red-ink); }
+  .pf-photo-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+  .pf-remove { display: inline-flex; align-items: center; gap: .4rem; font-size: .85rem; font-weight: 600; color: var(--ap-red-ink); cursor: pointer; margin: 0; padding: .45rem .9rem; border-radius: 999px; transition: background .2s; }
+  .pf-remove:hover { background: var(--ap-red-soft); }
+  .pf-remove input { accent-color: var(--ap-red); }
+
+  /* ---------- Password panel ---------- */
+  .pf-pass-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; border: 0; background: none; padding: 0; text-align: left; }
+  .pf-pass-toggle .pf-panel-title { margin: 0; }
+  .pf-pass-toggle .chev { color: var(--ap-blue); font-size: 1.3rem; transition: transform .25s; background: var(--ap-blue-soft); border-radius: 50%; }
+  .pf-pass-toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+  .pf-pass-body { padding-top: 1rem; }
+  .pf-strength-bar { height: 8px; background: var(--ap-blue-soft); border-radius: 999px; overflow: hidden; margin: .4rem 0; }
+  .pf-strength-fill { height: 100%; width: 0; border-radius: 999px; transition: width .3s, background-color .3s; }
+  #pfStrengthText, #pfMatchText { font-size: .84rem; font-weight: 600; min-height: 1.1rem; }
+  .pf-criteria { font-size: .85rem; margin-top: .25rem; padding: .8rem 1rem; background: var(--ap-page); border: 1px dashed var(--ap-line); border-radius: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: .1rem .75rem; }
+  .pf-criteria div { display: flex; align-items: center; gap: .4rem; margin: .15rem 0; }
+  .pf-criteria .met { color: var(--ap-green-dark); } .pf-criteria .unmet { color: var(--ap-red-ink); }
+  @media (max-width: 575.98px) { .pf-criteria { grid-template-columns: 1fr; } }
+
+  /* ---------- Animated buttons ---------- */
+  .pf-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; overflow: hidden; cursor: pointer; border-radius: 999px; padding: .6rem 1.5rem; font-weight: 700; font-size: .95rem; border: 1px solid transparent; margin: 0;
+            transition: transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s, background-color .2s, color .2s, border-color .2s; }
+  .pf-btn .bx { font-size: 1.15rem; transition: transform .25s; }
+  .pf-btn:focus-visible { outline: 3px solid rgba(var(--ap-blue-rgb), .35); outline-offset: 2px; }
+  .pf-btn:active { transform: translateY(0) scale(.96); }
+
+  .pf-btn-save { background: linear-gradient(135deg, var(--ap-blue), color-mix(in srgb, var(--ap-blue) 50%, var(--ap-accent))); color: #fff; box-shadow: 0 8px 18px rgba(var(--ap-blue-rgb), .32); }
+  .pf-btn-save::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.4) 50%, transparent 70%); transform: translateX(-120%); transition: transform .6s ease; pointer-events: none; }
+  .pf-btn-save:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(var(--ap-blue-rgb), .4); color: #fff; }
+  .pf-btn-save:hover::after { transform: translateX(120%); }
+  .pf-btn-save:hover .bx { transform: scale(1.2) rotate(-8deg); }
+
+  .pf-btn-cancel { background: #fff; color: var(--ap-muted); border-color: var(--ap-line); }
+  .pf-btn-cancel:hover { background: var(--ap-red-soft); border-color: color-mix(in srgb, var(--ap-red) 40%, #fff); color: var(--ap-red-ink); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(229,86,109,.15); }
+  .pf-btn-cancel:hover .bx { transform: rotate(90deg); }
+
+  .pf-btn-soft { background: var(--ap-blue-soft); color: var(--ap-blue-dark); border-color: var(--ap-beige-dark); padding: .5rem 1.1rem; font-size: .9rem; }
+  .pf-btn-soft:hover { background: var(--ap-accent-soft); transform: translateY(-2px); box-shadow: 0 6px 14px rgba(var(--ap-blue-rgb), .15); }
+  .pf-btn-soft:hover .bx { transform: translateY(-2px); }
+
+  .pf-spinner { display: none; width: 1em; height: 1em; border: 2px solid rgba(255,255,255,.45); border-top-color: #fff; border-radius: 50%; animation: pfSpin .7s linear infinite; }
+  .pf-btn.is-loading { pointer-events: none; opacity: .9; }
+  .pf-btn.is-loading .pf-spinner { display: inline-block; }
+  .pf-btn.is-loading .bx { display: none; }
+  @keyframes pfSpin { to { transform: rotate(360deg); } }
+
+  /* ---------- Notifications ---------- */
+  main .alert { border: 0; border-radius: 18px; box-shadow: 0 8px 22px rgba(var(--ap-blue-rgb), .10); animation: pfSlideDown .45s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes pfSlideDown { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+  .pf-toasts { position: fixed; top: 1rem; right: 1rem; z-index: 2000; display: flex; flex-direction: column; gap: .6rem; max-width: min(360px, calc(100vw - 2rem)); }
+  .pf-toast { display: flex; align-items: flex-start; gap: .75rem; background: #fff; border-radius: 18px; padding: .85rem 1rem; box-shadow: 0 12px 30px rgba(var(--ap-blue-rgb), .22); border-left: 5px solid var(--ap-accent); animation: pfToastIn .4s cubic-bezier(.2,.8,.2,1) both; }
+  .pf-toast.leaving { animation: pfToastOut .3s ease forwards; }
+  .pf-toast > .bx { font-size: 1.4rem; margin-top: .1rem; color: var(--ap-blue); }
+  .pf-toast strong { display: block; font-size: .92rem; color: var(--ap-ink); }
+  .pf-toast span { font-size: .84rem; color: var(--ap-muted); }
+  .pf-toast button { margin-left: auto; border: 0; background: none; color: var(--ap-muted); font-size: 1.3rem; line-height: 1; padding: 0 .1rem; }
+  @keyframes pfToastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: none; } }
+  @keyframes pfToastOut { to { opacity: 0; transform: translateX(30px); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pf-header, .pf-card, main .alert, .pf-toast, .pf-modal.fade .modal-dialog, .pf-btn, .pf-btn .bx, .pf-close, .pf-edit-btn, .pf-pass-toggle .chev, .pf-stat, .pf-avatar-btn { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="pf-toasts" id="pfToasts" aria-live="polite"></div>
+
+<div class="pf-wrap">
+
+  {# ---------- Header card ---------- #}
+  <div class="pf-header">
+    <div class="pf-banner"></div>
+    <div class="pf-header-body">
+      <div class="pf-avatar-wrap">
+        {% if photo_url %}
+          <button type="button" class="pf-avatar pf-avatar-btn" data-bs-toggle="modal" data-bs-target="#photoViewer" title="Click to view photo" aria-label="View profile photo"><img src="{{ photo_url }}" alt="Profile photo"></button>
+        {% else %}
+          <button type="button" class="pf-avatar pf-avatar-btn" data-bs-toggle="modal" data-bs-target="#editProfileModal" title="Click to add a photo" aria-label="Add a profile photo">{{ initials }}</button>
+        {% endif %}
+        <div class="pf-avatar-badge {% if employee_profile and employee_profile.status != 'active' %}inactive{% endif %}" title="{% if employee_profile %}{{ employee_profile.get_status_display }}{% else %}Active{% endif %}"><i class='bx bx-check'></i></div>
+      </div>
+      <div class="pf-info">
+        <h1 class="pf-sr-only">Profile</h1>
+        <div class="pf-badges">
+          <span class="pf-role {% if profile_user.role == 'employee' %}employee{% else %}admin{% endif %}" title="Your account role">
+            <i class='bx {% if profile_user.role == "employee" %}bx-user{% else %}bx-shield-quarter{% endif %}'></i>{{ profile_user.get_role_display }}
+          </span>
+          {% if employee_profile %}
+            <span class="pf-badge pf-black"><i class='bx bx-id-card'></i>{{ employee_profile.employee_id }}</span>
+          {% endif %}
+          {% if employee_profile and employee_profile.department %}
+            <span class="pf-badge"><i class='bx bx-buildings'></i>{{ employee_profile.get_department_display }}</span>
+          {% endif %}
+         <span class="pf-badge"><i class='bx bx-calendar'></i>Joined {{ profile_user.date_joined|date:"d-m-Y" }}</span>
+          <button type="button" class="pf-edit-btn" data-bs-toggle="modal" data-bs-target="#editProfileModal"><i class='bx bx-edit-alt'></i>Edit Profile</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ---------- Personal Information | User Activity ---------- #}
+  <div class="pf-two">
+
+    <section class="pf-card">
+      <div class="pf-card-head">
+        <h2 class="pf-card-title"><span class="pf-title-icon"><i class='bx bx-user'></i></span>Personal Information</h2>
+      </div>
+
+      <div class="pf-scroll" tabindex="0" role="region" aria-label="Personal information">
+      <div class="pf-row">
+        <div class="pf-row-icon"><i class='bx bx-user'></i></div>
+        <div><div class="pf-label">Username</div><div class="pf-value pf-black">{{ profile_user.username }}</div></div>
+      </div>
+      <div class="pf-row">
+        <div class="pf-row-icon"><i class='bx bx-user-circle'></i></div>
+        <div><div class="pf-label">Full Name</div><div class="pf-value pf-black">{{ profile_user.get_full_name|default:"Not set" }}</div></div>
+      </div>
+      {% if employee_profile %}
+      <div class="pf-row">
+        <div class="pf-row-icon"><i class='bx bx-id-card'></i></div>
+        <div><div class="pf-label">Employee ID</div><div class="pf-value pf-black">{{ employee_profile.employee_id }}</div></div>
+      </div>
+      {% endif %}
+      <div class="pf-row">
+        <div class="pf-row-icon"><i class='bx bx-envelope'></i></div>
+        <div><div class="pf-label">Email Address</div><div class="pf-value pf-black">{{ profile_user.email|default:"Not set" }}</div></div>
+      </div>
+      {% if employee_profile %}
+      <div class="pf-row">
+        <div class="pf-row-icon"><i class='bx bx-phone'></i></div>
+        <div><div class="pf-label">Mobile Number</div><div class="pf-value">{{ employee_profile.phone|default:"Not set" }}</div></div>
+      </div>
+      <div class="pf-row">
+        <div class="pf-row-icon"><i class='bx bx-buildings'></i></div>
+        <div><div class="pf-label">Department</div><div class="pf-value">{% if employee_profile.department %}{{ employee_profile.get_department_display }}{% else %}Not assigned{% endif %}</div></div>
+      </div>
+      {% endif %}
+      <div class="pf-row">
+        <div class="pf-row-icon"><i class='bx bx-briefcase'></i></div>
+        <div><div class="pf-label">Role</div><div class="pf-value pf-black">{{ profile_user.get_role_display }}</div></div>
+      </div>
+      <div class="pf-row">
+        <div class="pf-row-icon"><i class='bx bx-calendar-check'></i></div>
+        <div><div class="pf-label">Member Since</div><div class="pf-value">{{ profile_user.date_joined|date:"F d, Y" }}</div></div>
+      </div>
+      </div>
+    </section>
+
+    <section class="pf-card">
+      <div class="pf-card-head">
+        <h2 class="pf-card-title"><span class="pf-title-icon"><i class='bx bx-time'></i></span>User Activity</h2>
+      </div>
+
+      <div class="pf-scroll" tabindex="0" role="region" aria-label="User activity">
+      <div class="pf-row">
+        <div class="pf-act-icon blue"><i class='bx bx-user-plus'></i></div>
+        <div><div class="pf-value">Account Created</div><div class="pf-label">{{ profile_user.date_joined|date:"M d, Y - H:i" }}</div></div>
+      </div>
+      <div class="pf-row">
+        <div class="pf-act-icon green"><i class='bx bx-log-in'></i></div>
+        <div><div class="pf-value">Last Login</div><div class="pf-label">{{ profile_user.last_login|date:"M d, Y - H:i"|default:"Never" }}</div></div>
+      </div>
+      {% if last_record %}
+      <div class="pf-row">
+        <div class="pf-act-icon orange"><i class='bx bx-log-in'></i></div>
+        <div><div class="pf-value">Last Check-in</div><div class="pf-label">{{ last_record.check_in_at|date:"M d, Y - H:i" }}</div></div>
+      </div>
+      <div class="pf-row">
+        <div class="pf-act-icon orange"><i class='bx bx-log-out'></i></div>
+        <div><div class="pf-value">Last Check-out</div><div class="pf-label">{% if last_checkout %}{{ last_checkout.check_out_at|date:"M d, Y - H:i" }}{% elif last_record.check_out_at %}{{ last_record.check_out_at|date:"M d, Y - H:i" }}{% else %}Not checked out yet{% endif %}</div></div>
+      </div>
+      {% endif %}
+      {% if employee_profile %}
+      <div class="pf-row">
+        <div class="pf-act-icon purple"><i class='bx bx-edit'></i></div>
+        <div><div class="pf-value">Profile Updated</div><div class="pf-label">{{ employee_profile.updated_at|date:"M d, Y - H:i" }}</div></div>
+      </div>
+      {% endif %}
+      </div>
+    </section>
+  </div>
+
+  {# ---------- Quick stats (full width, below) ---------- #}
+  {% if profile_user.role == "employee" or total_employees is not None %}
+  <div class="pf-card">
+    <div class="pf-card-head">
+      <h2 class="pf-card-title"><span class="pf-title-icon"><i class='bx bx-bar-chart'></i></span>Quick Stats</h2>
+    </div>
+    <div class="pf-stats-row">
+      {% if profile_user.role == "employee" %}
+        <div class="pf-stat blue"><div class="pf-stat-icon"><i class='bx bx-calendar-check'></i></div><div><div class="pf-stat-value">{{ days_present|default:0 }}</div><div class="pf-stat-label">Days Checked In ({{ month_label }})</div></div></div>
+        <div class="pf-stat orange"><div class="pf-stat-icon"><i class='bx bx-timer'></i></div><div><div class="pf-stat-value">{{ average_hours|default:"-" }}</div><div class="pf-stat-label">Average Working Time</div></div></div>
+        {% if days_completed is not None %}
+          <div class="pf-stat green"><div class="pf-stat-icon"><i class='bx bx-check-circle'></i></div><div><div class="pf-stat-value">{{ days_completed }}</div><div class="pf-stat-label">Days Completed</div></div></div>
+        {% else %}
+          <div class="pf-stat green"><div class="pf-stat-icon"><i class='bx bx-log-in'></i></div><div><div class="pf-stat-value">{% if last_record %}{{ last_record.check_in_at|date:"j M" }}{% else %}-{% endif %}</div><div class="pf-stat-label">Last Check-in</div></div></div>
+        {% endif %}
+      {% else %}
+        <div class="pf-stat blue"><div class="pf-stat-icon"><i class='bx bx-group'></i></div><div><div class="pf-stat-value">{{ total_employees }}</div><div class="pf-stat-label">Total Employees</div></div></div>
+        <div class="pf-stat green"><div class="pf-stat-icon"><i class='bx bx-user-check'></i></div><div><div class="pf-stat-value">{{ active_employees }}</div><div class="pf-stat-label">Active Employees</div></div></div>
+        <div class="pf-stat orange"><div class="pf-stat-icon"><i class='bx bx-log-in-circle'></i></div><div><div class="pf-stat-value">{{ checked_in_today }}</div><div class="pf-stat-label">Checked In Today</div></div></div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+{# ---------- Edit Profile modal ---------- #}
+<div class="modal fade pf-modal" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileTitle" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <form method="post" action="{% url 'profile' %}" enctype="multipart/form-data" class="modal-content" id="pfForm" novalidate>
+      {% csrf_token %}
+
+      <div class="pf-modal-head">
+        <div class="pf-modal-titlebox">
+          <span class="pf-title-icon"><i class='bx bx-edit-alt'></i></span>
+          <div>
+            <h3 id="editProfileTitle">Edit Profile</h3>
+          </div>
+        </div>
+        <button type="button" class="pf-close pf-cancel" aria-label="Close"><i class='bx bx-x'></i></button>
+      </div>
+
+      <div class="modal-body">
+        {% if form.non_field_errors %}
+          <div class="pf-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+
+        {# --- Profile photo --- #}
+        <div class="pf-panel">
+          <h4 class="pf-panel-title"><i class='bx bx-image'></i>Profile photo</h4>
+          <div class="pf-photo-card">
+            <button type="button" class="pf-photo-pick" id="pfPhotoPick" title="Click to choose a photo" aria-label="Choose a profile photo">
+              <span class="pf-photo-preview" id="pfPhotoPreview" data-initials="{{ initials }}" data-original="{{ photo_url|default:'' }}">
+                {% if photo_url %}<img src="{{ photo_url }}" alt="Current profile photo">{% else %}<span>{{ initials }}</span>{% endif %}
+              </span>
+              <span class="pf-photo-cam"><i class='bx bx-camera'></i></span>
+            </button>
+            {{ form.photo }}
+            <div class="pf-photo-meta">
+              <h4>{% if photo_url %}Change your photo{% else %}Add a Photo{% endif %}</h4>
+              <p class="pf-photo-note" id="pfPhotoNote" data-default="JPG, PNG or WebP. Maximum size 2 MB.">JPG, PNG or WebP. Maximum size 2 MB.</p>
+              <div class="pf-photo-actions">
+                <button type="button" class="pf-btn pf-btn-soft" id="pfPhotoBtn"><i class='bx bx-upload'></i><span>{% if photo_url %}Change photo{% else %}Upload photo{% endif %}</span></button>
+                {% if photo_url %}
+                  <label class="pf-remove" for="{{ form.remove_photo.id_for_label }}">{{ form.remove_photo }}<i class='bx bx-trash'></i>Remove photo</label>
+                {% endif %}
+              </div>
+              {% for error in form.photo.errors %}<div class="pf-error"><i class='bx bx-error-circle'></i>{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+        </div>
+
+        {# --- Account --- #}
+        <div class="pf-panel">
+          <h4 class="pf-panel-title"><i class='bx bx-id-card'></i>Account</h4>
+          <div class="row g-3">
+            {% if employee_profile %}
+            <div class="col-md-6">
+              <label class="pf-form-label">Employee ID</label>
+              <div class="pf-input locked pf-black"><i class='bx bx-hash'></i><input type="text" class="form-control" value="{{ employee_profile.employee_id }}" disabled><i class='bx bx-lock-alt pf-lock-ico'></i></div>
+            </div>
+            {% endif %}
+            <div class="{% if employee_profile %}col-md-6{% else %}col-12{% endif %}">
+              <label class="pf-form-label">Role</label>
+              <div class="pf-input locked pf-black"><i class='bx bx-briefcase'></i><input type="text" class="form-control" value="{{ profile_user.get_role_display }}" disabled><i class='bx bx-lock-alt pf-lock-ico'></i></div>
+            </div>
+            <div class="col-12">
+              <label class="pf-form-label" for="{{ form.username.id_for_label }}">Username</label>
+              <div class="pf-input pf-black"><i class='bx bx-at'></i>{{ form.username }}</div>
+              {% for error in form.username.errors %}<div class="pf-error"><i class='bx bx-error-circle'></i>{{ error }}</div>{% endfor %}
+              {% if not form.username.errors %}<div class="pf-hint">Letters, numbers and @ . + - _ only.</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        {# --- Contact --- #}
+        <div class="pf-panel">
+          <h4 class="pf-panel-title"><i class='bx bx-user'></i>Personal &amp; contact details</h4>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="pf-form-label" for="{{ form.first_name.id_for_label }}">First name</label>
+              <div class="pf-input"><i class='bx bx-user'></i>{{ form.first_name }}</div>
+              {% for error in form.first_name.errors %}<div class="pf-error"><i class='bx bx-error-circle'></i>{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="pf-form-label" for="{{ form.last_name.id_for_label }}">Last name</label>
+              <div class="pf-input"><i class='bx bx-user'></i>{{ form.last_name }}</div>
+              {% for error in form.last_name.errors %}<div class="pf-error"><i class='bx bx-error-circle'></i>{{ error }}</div>{% endfor %}
+            </div>
+            <div class="{% if employee_profile %}col-md-6{% else %}col-12{% endif %}">
+              <label class="pf-form-label" for="{{ form.email.id_for_label }}">Email</label>
+              <div class="pf-input"><i class='bx bx-envelope'></i>{{ form.email }}</div>
+              {% for error in form.email.errors %}<div class="pf-error"><i class='bx bx-error-circle'></i>{{ error }}</div>{% endfor %}
+            </div>
+            {% if employee_profile %}
+            <div class="col-md-6">
+              <label class="pf-form-label" for="{{ form.phone.id_for_label }}">Mobile number</label>
+              <div class="pf-input"><i class='bx bx-phone'></i>{{ form.phone }}</div>
+              {% for error in form.phone.errors %}<div class="pf-error"><i class='bx bx-error-circle'></i>{{ error }}</div>{% endfor %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        {# --- Security (collapsible) --- #}
+        <div class="pf-panel">
+          <button type="button" class="pf-pass-toggle" data-bs-toggle="collapse" data-bs-target="#pfPassPanel"
+                  aria-expanded="{% if form.current_password.errors or form.password1.errors or form.password2.errors %}true{% else %}false{% endif %}" aria-controls="pfPassPanel">
+            <h4 class="pf-panel-title"><i class='bx bx-lock-alt'></i>Change password <span class="text-muted fw-normal text-lowercase">(optional)</span></h4>
+            <i class='bx bx-chevron-down chev'></i>
+          </button>
+          <div class="collapse {% if form.current_password.errors or form.password1.errors or form.password2.errors %}show{% endif %}" id="pfPassPanel">
+            <div class="pf-pass-body">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="pf-form-label" for="{{ form.current_password.id_for_label }}">Current password</label>
+                  <div class="pf-input"><i class='bx bx-key'></i>{{ form.current_password }}</div>
+                  {% for error in form.current_password.errors %}<div class="pf-error"><i class='bx bx-error-circle'></i>{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-md-6">
+                  <label class="pf-form-label" for="pfPassword">New password</label>
+                  <div class="pf-input"><i class='bx bx-lock'></i>{{ form.password1 }}</div>
+                  {% for error in form.password1.errors %}<div class="pf-error"><i class='bx bx-error-circle'></i>{{ error }}</div>{% endfor %}
+                  <div id="pfStrengthText"></div>
+                  <div class="pf-strength-bar"><div class="pf-strength-fill" id="pfStrengthFill"></div></div>
+                </div>
+                <div class="col-md-6">
+                  <label class="pf-form-label" for="pfConfirm">Confirm new password</label>
+                  <div class="pf-input"><i class='bx bx-lock'></i>{{ form.password2 }}</div>
+                  {% for error in form.password2.errors %}<div class="pf-error"><i class='bx bx-error-circle'></i>{{ error }}</div>{% endfor %}
+                  <div id="pfMatchText"></div>
+                </div>
+                <div class="col-12"><div id="pfCriteria"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="pf-btn pf-btn-cancel pf-cancel" id="pfCancelBtn"><i class='bx bx-x'></i><span>Cancel</span></button>
+        <button type="submit" class="pf-btn pf-btn-save" id="pfSaveBtn"><i class='bx bx-check'></i><span class="pf-spinner" aria-hidden="true"></span><span class="pf-btn-label">Save Changes</span></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ---------- Photo viewer ---------- #}
+{% if photo_url %}
+<div class="modal fade" id="photoViewer" tabindex="-1" aria-label="Profile photo" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content pf-viewer">
+      <button type="button" class="pf-viewer-close" data-bs-dismiss="modal" aria-label="Close"><i class='bx bx-x'></i></button>
+      <img src="{{ photo_url }}" alt="Profile photo">
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var PROFILE_URL = "{% url 'profile' %}";
+    var HAS_ERRORS = {% if open_modal %}true{% else %}false{% endif %};
+
+    var modalEl = document.getElementById("editProfileModal");
+    var form = document.getElementById("pfForm");
+    var saveBtn = document.getElementById("pfSaveBtn");
+    var cancelBtn = document.getElementById("pfCancelBtn");
+    var passPanel = document.getElementById("pfPassPanel");
+    var pw = document.getElementById("pfPassword");
+    var confirmInput = document.getElementById("pfConfirm");
+    var strengthText = document.getElementById("pfStrengthText");
+    var strengthFill = document.getElementById("pfStrengthFill");
+    var criteriaBox = document.getElementById("pfCriteria");
+    var matchText = document.getElementById("pfMatchText");
+    var fileInput = form.querySelector('input[name="photo"]');
+    var removeBox = form.querySelector('input[name="remove_photo"]');
+    var preview = document.getElementById("pfPhotoPreview");
+    var photoNote = document.getElementById("pfPhotoNote");
+    var phoneInput = form.querySelector('input[name="phone"]');
+    var photoPick = document.getElementById("pfPhotoPick");
+    var photoBtn = document.getElementById("pfPhotoBtn");
+    var MAX_BYTES = 2 * 1024 * 1024;
+    var submitting = false, cancelClicked = false;
+
+    /* ---------- Toasts ---------- */
+    function showToast(title, text) {
+      var box = document.getElementById("pfToasts");
+      var el = document.createElement("div");
+      el.className = "pf-toast";
+      el.innerHTML = "<i class='bx bx-undo'></i><div><strong></strong><span></span></div><button type='button' aria-label='Dismiss'>&times;</button>";
+      el.querySelector("strong").textContent = title;
+      el.querySelector("span").textContent = text;
+      function close() { el.classList.add("leaving"); setTimeout(function () { el.remove(); }, 300); }
+      el.querySelector("button").addEventListener("click", close);
+      box.appendChild(el);
+      setTimeout(close, 4500);
+    }
+    if (sessionStorage.getItem("pfToast") === "discarded") {
+      sessionStorage.removeItem("pfToast");
+      showToast("Changes discarded", "Your profile was left exactly as it was.");
+    }
+
+    /* ---------- Photo preview ---------- */
+    function setPreview(src) {
+      if (!preview) return;
+      preview.textContent = "";
+      if (src) {
+        var img = document.createElement("img");
+        img.alt = "Profile photo preview";
+        img.src = src;
+        preview.appendChild(img);
+      } else {
+        var s = document.createElement("span");
+        s.textContent = preview.dataset.initials;
+        preview.appendChild(s);
+      }
+    }
+    function setNote(text, isError) {
+      if (!photoNote) return;
+      photoNote.textContent = text;
+      photoNote.className = "pf-photo-note" + (isError ? " err" : "");
+    }
+
+    function openPicker() { if (fileInput) fileInput.click(); }
+    if (photoPick) photoPick.addEventListener("click", openPicker);
+    if (photoBtn) photoBtn.addEventListener("click", openPicker);
+
+    if (fileInput) fileInput.addEventListener("change", function () {
+      var f = fileInput.files && fileInput.files[0];
+      if (!f) { setPreview(removeBox && removeBox.checked ? "" : preview.dataset.original); setNote(photoNote.dataset.default); return; }
+      if (f.type.indexOf("image/") !== 0) {
+        fileInput.value = ""; setPreview(preview.dataset.original); setNote("Please choose an image file (JPG, PNG or WebP).", true); return;
+      }
+      if (f.size > MAX_BYTES) {
+        fileInput.value = ""; setPreview(preview.dataset.original); setNote("That photo is larger than 2 MB. Please choose a smaller one.", true); return;
+      }
+      setPreview(URL.createObjectURL(f));
+      setNote(f.name + " selected \u2014 click Save Changes to apply it.");
+      if (removeBox) removeBox.checked = false;
+    });
+
+    if (removeBox) removeBox.addEventListener("change", function () {
+      if (removeBox.checked) {
+        if (fileInput) fileInput.value = "";
+        setPreview("");
+        setNote("Your photo will be removed when you save.");
+      } else {
+        setPreview(preview.dataset.original);
+        setNote(photoNote.dataset.default);
+      }
+    });
+
+    /* ---------- Mobile number: digits only, max 10 ---------- */
+    if (phoneInput) {
+      phoneInput.addEventListener("input", function () {
+        phoneInput.setCustomValidity("");
+        var cleaned = phoneInput.value.replace(/[^0-9]/g, "").slice(0, 10);
+        if (cleaned !== phoneInput.value) phoneInput.value = cleaned;
+      });
+      phoneInput.addEventListener("paste", function (e) {
+        e.preventDefault();
+        var text = (e.clipboardData || window.clipboardData).getData("text");
+        phoneInput.value = text.replace(/[^0-9]/g, "").slice(0, 10);
+        phoneInput.setCustomValidity("");
+      });
+    }
+
+    /* ---------- Password helpers ---------- */
+    function item(ok, label) {
+      return "<div class='" + (ok ? "met" : "unmet") + "'><i class='bx " + (ok ? "bx-check-circle" : "bx-x-circle") + "'></i>" + label + "</div>";
+    }
+    function checkMatch() {
+      if (!confirmInput.value) { matchText.textContent = ""; matchText.style.color = ""; return; }
+      var same = confirmInput.value === pw.value;
+      matchText.textContent = same ? "Passwords match" : "Passwords do not match";
+      matchText.style.color = same ? "#16a34a" : "#dc3545";
+    }
+    function resetPasswordUI() {
+      strengthText.textContent = ""; strengthFill.style.width = "0"; criteriaBox.innerHTML = "";
+      matchText.textContent = "";
+    }
+    pw.addEventListener("input", function () {
+      var v = pw.value, len = v.length;
+      var upper = /[A-Z]/.test(v), lower = /[a-z]/.test(v), digit = /\d/.test(v), special = /[^A-Za-z0-9]/.test(v);
+      var variety = [upper, lower, digit, special].filter(Boolean).length;
+      var text = "", color = "", width = 0;
+
+      if (len === 0) { text = ""; }
+      else if (len < 8) { text = "Too short (minimum 8 characters)"; color = "#dc3545"; width = 20; }
+      else if (variety >= 3) { text = "Password strength: Strong"; color = "#16a34a"; width = 100; }
+      else if (variety === 2) { text = "Password strength: Medium"; color = "#f59e0b"; width = 60; }
+      else { text = "Password strength: Weak"; color = "#dc3545"; width = 30; }
+
+      strengthText.textContent = text;
+      strengthText.style.color = color;
+      strengthFill.style.width = width + "%";
+      strengthFill.style.backgroundColor = color;
+
+      criteriaBox.innerHTML = len === 0 ? "" :
+        "<div class='pf-criteria'>" +
+        item(len >= 8, "At least 8 characters (" + len + "/8)") +
+        item(upper, "Uppercase letter (A-Z)") +
+        item(lower, "Lowercase letter (a-z)") +
+        item(digit, "Number (0-9)") +
+        item(special, "Special character (!@#$%^&*)") +
+        "</div>";
+      checkMatch();
+    });
+    confirmInput.addEventListener("input", checkMatch);
+
+    /* ---------- Dirty check (to tell "discarded" from "nothing changed") ---------- */
+    function snapshot() {
+      var parts = [];
+      Array.prototype.forEach.call(form.elements, function (el) {
+        if (!el.name || el.name === "csrfmiddlewaretoken" || el.disabled) return;
+        if (el.type === "file") parts.push(el.name + ":" + el.files.length);
+        else if (el.type === "checkbox" || el.type === "radio") parts.push(el.name + ":" + el.checked);
+        else parts.push(el.name + ":" + el.value);
+      });
+      return parts.join("|");
+    }
+    var initialSnapshot = snapshot();
+
+    /* ---------- Cancel / close ---------- */
+    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    document.querySelectorAll(".pf-cancel").forEach(function (btn) {
+      btn.addEventListener("click", function () { cancelClicked = true; modal.hide(); });
+    });
+
+    modalEl.addEventListener("hidden.bs.modal", function () {
+      if (submitting) return;
+      var dirty = HAS_ERRORS || snapshot() !== initialSnapshot;
+
+      if (HAS_ERRORS) {
+        // Re-opened with errors: reload to drop the invalid input
+        if (cancelClicked) sessionStorage.setItem("pfToast", "discarded");
+        window.location.replace(PROFILE_URL);
+        return;
+      }
+      form.reset();
+      resetPasswordUI();
+      if (preview) { setPreview(preview.dataset.original); setNote(photoNote.dataset.default); }
+      bootstrap.Collapse.getOrCreateInstance(passPanel, { toggle: false }).hide();
+      if (cancelClicked) {
+        showToast(dirty ? "Changes discarded" : "Nothing to cancel",
+                  dirty ? "Your profile was left exactly as it was." : "You hadn't changed anything.");
+      }
+      cancelClicked = false;
+    });
+
+    /* ---------- Save button: loading state, no double submit ---------- */
+    form.addEventListener("submit", function (e) {
+      if (submitting) { e.preventDefault(); return; }
+      if (phoneInput && phoneInput.value && phoneInput.value.length !== 10) {
+        e.preventDefault();
+        phoneInput.setCustomValidity("Please enter exactly 10 digits.");
+        phoneInput.reportValidity();
+        phoneInput.focus();
+        return;
+      }
+      submitting = true;
+      saveBtn.classList.add("is-loading");
+      saveBtn.querySelector(".pf-btn-label").textContent = "Saving\u2026";
+      cancelBtn.style.pointerEvents = "none";
+      cancelBtn.style.opacity = ".55";
+    });
+    window.addEventListener("pageshow", function (e) {
+      if (e.persisted) {  // back button restored a stuck "Saving..." state
+        submitting = false;
+        saveBtn.classList.remove("is-loading");
+        saveBtn.querySelector(".pf-btn-label").textContent = "Save Changes";
+        cancelBtn.style.pointerEvents = ""; cancelBtn.style.opacity = "";
+      }
+    });
+
+    {% if open_modal %}
+    modal.show();
+    {% endif %}
+
+    // Fade out the status message after a few seconds
+    setTimeout(function () {
+      document.querySelectorAll("main .alert").forEach(function (el) {
+        bootstrap.Alert.getOrCreateInstance(el).close();
+      });
+    }, 6000);
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,383 @@
+{% extends "portal/avsys_base.html" %}
+{% load static %}
+
+{% block title %}Log in · AvSys{% endblock %}
+
+{% block content %}
+
+
+<style>
+/* ===== LOGIN PAGE ONLY ===== */
+
+.stage .rise {
+    width: 100%;
+    max-width: 410px;
+}
+
+.stage .card {
+    position: relative;
+    width: 100%;
+    padding: 26px 32px 30px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 20px 65px rgba(22, 54, 110, 0.22);
+}
+
+/* SMALL LOGO */
+.stage .logo-wrap {
+    margin: 5px auto 10px;
+    display: flex;
+    justify-content: center;
+}
+
+.stage .logo {
+    width: 125px !important;
+    max-width: 125px !important;
+    height: auto !important;
+    filter: none;
+}
+
+/* HEADING */
+.card-body h2 {
+    font-size: 25px;
+    font-weight: 700;
+    color: #172b50;
+    text-align: center;
+    margin: 8px 0;
+}
+
+.card-body .sub {
+    font-size: 13px;
+    color: #7787a1;
+    text-align: center;
+    margin-bottom: 26px;
+}
+
+/* FIELD */
+
+/* =====================================
+   SAME SIZE FOR BOTH INPUT FIELDS
+===================================== */
+
+/* The wrapper is a plain block now (it was a flex row that kept empty space
+   on the right of the Password field where the eye button used to be).
+   The input always fills the full width, same as Employee ID. */
+.card-body .icon-input {
+    position: relative;
+    display: block !important;
+    width: 100%;
+}
+
+/* remove any leftover space/element reserved for the old eye button */
+.card-body .icon-input::before,
+.card-body .icon-input::after {
+    content: none !important;
+    display: none !important;
+}
+/* hide only the old eye button (never the password input or its wrapper) */
+.card-body .icon-input > button,
+.card-body .icon-input .password-toggle {
+    display: none !important;
+}
+
+/* if Django wraps the password input in a div/span, let that wrapper fill the box too */
+.card-body .icon-input > div,
+.card-body .icon-input > span {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Employee ID and Password same design */
+.card-body .icon-input input,
+.card-body .icon-input input[type="text"],
+.card-body .icon-input input[type="password"] {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 64px !important;
+    padding: 0 50px 0 48px !important;
+    margin: 0 !important;
+    float: none !important;
+
+    box-sizing: border-box !important;
+
+    background: #e8f0ff !important;
+    border: 1.5px solid #dce6f7 !important;
+    border-radius: 18px !important;
+
+    color: #1e3355 !important;
+    font-size: 15px !important;
+    font-family: inherit !important;
+
+    outline: none !important;
+    box-shadow: none !important;
+    transition: all 0.25s ease;
+}
+
+/* Password + Employee ID: forced identical size.
+   ID selectors win over any older rule in auth.css, so both inputs always fill the full box. */
+html body .card-body .icon-input input#{{ form.employee_id.id_for_label }},
+html body .card-body .icon-input input#{{ form.password.id_for_label }} {
+    display: block !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+    height: 64px !important;
+    margin: 0 !important;
+    padding: 0 50px 0 48px !important;
+    box-sizing: border-box !important;
+}
+
+/* Focus effect */
+.card-body .icon-input input:focus {
+    background: #fff !important;
+    border-color: #377df5 !important;
+    box-shadow: 0 0 0 4px rgba(55,125,245,.12) !important;
+}
+
+/* Same icon alignment */
+.card-body .icon-input > svg {
+    position: absolute !important;
+    left: 20px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 20px !important;
+    height: 20px !important;
+    fill: none !important;
+    stroke: #8a9ab3 !important;
+    stroke-width: 1.8 !important;
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* Password eye icon */
+.card-body .password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-body .password-toggle svg {
+    width: 20px !important;
+    height: 20px !important;
+    fill: none !important;
+    stroke: #8a9ab3 !important;
+    stroke-width: 1.8 !important;
+}
+
+
+/* LOGIN BUTTON */
+.card-body .btn {
+    width: 100%;
+    min-height: 51px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2365e8, #438dff);
+    color: white;
+    font-size: 15px;
+    font-weight: 650;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(35, 101, 232, 0.22);
+    transition: 0.25s ease;
+}
+
+.card-body .btn:hover {
+    background: linear-gradient(135deg, #1554d4, #2878ef);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(35, 101, 232, 0.28);
+}
+
+.card-body .btn-icon {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+}
+
+/* FORGOT PASSWORD */
+.card-body .links {
+    text-align: center;
+    margin: 20px 0 0;
+}
+
+.card-body .links a {
+    color: #2869e8;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.card-body .links a:hover {
+    text-decoration: underline;
+}
+
+/* COPYRIGHT */
+.card-body .copyright {
+    text-align: center;
+    margin: 18px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid #e3ebf8;
+    font-size: 12px;
+    color: #8a9ab3;
+}
+
+.card-body .copyright strong {
+    color: #5b6e8f;
+    font-weight: 600;
+}
+
+/* ERRORS */
+.card-body .err {
+    font-size: 12px;
+    color: #dc3545;
+    margin-top: 6px;
+}
+
+/* BACKGROUND ZOOM OUT */
+.photo-world {
+    scale: 1 !important;
+    animation: none !important;
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+    .stage {
+        padding: 20px 15px;
+    }
+
+    .stage .card {
+        padding: 24px 22px;
+        border-radius: 20px;
+    }
+
+    .stage .logo {
+        width: 110px !important;
+        max-width: 110px !important;
+    }
+
+    .card-body h2 {
+        font-size: 22px;
+    }
+
+    .card-body .icon-input input {
+        height: 49px;
+    }
+}
+</style>
+
+<h2>Welcome back!</h2>
+<p class="sub">Sign in to your AvSys account</p>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="msg error">
+        {{ form.non_field_errors|join:" " }}
+    </div>
+    {% endif %}
+
+    <!-- Employee ID -->
+    <div class="field">
+        <label for="{{ form.employee_id.id_for_label }}">
+            Employee / Admin ID
+        </label>
+
+        <div class="icon-input">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="2"/>
+                <circle cx="9" cy="11" r="2"/>
+                <path d="M6 16c.5-1.5 1.5-2.3 3-2.3s2.5.8 3 2.3M15 10h3M15 14h3"/>
+            </svg>
+
+            {{ form.employee_id }}
+        </div>
+
+        {% for error in form.employee_id.errors %}
+        <div class="err">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <!-- Password -->
+    <div class="field">
+        <label for="{{ form.password.id_for_label }}">
+            Password
+        </label>
+
+        <div class="icon-input">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="5" y="10" width="14" height="11" rx="2"/>
+                <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+            </svg>
+
+            {{ form.password }}
+        </div>
+
+        {% for error in form.password.errors %}
+        <div class="err">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <!-- Sign In -->
+    <button class="btn" type="submit">
+        <span>Sign in</span>
+
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14m-6-6 6 6-6 6"/>
+        </svg>
+    </button>
+</form>
+
+<p class="links">
+    <a href="{% url 'forgot_password' %}">
+        Forgot password?
+    </a>
+</p>
+
+<p class="copyright">
+    &copy; {% now "Y" %} <strong>AvSys International(India) Pvt.Ltd</strong>
+</p>
+
+<script>
+/* Safety net: make the Password box exactly as wide as the Employee ID box */
+document.addEventListener("DOMContentLoaded", function () {
+    var emp = document.getElementById("{{ form.employee_id.id_for_label|escapejs }}");
+    var pw  = document.getElementById("{{ form.password.id_for_label|escapejs }}");
+    if (!emp || !pw) return;
+
+    function sync() {
+        pw.style.removeProperty("width");
+        var w = emp.getBoundingClientRect().width;
+        if (w && Math.abs(pw.getBoundingClientRect().width - w) > 1) {
+            pw.style.setProperty("width", w + "px", "important");
+            pw.style.setProperty("min-width", w + "px", "important");
+        }
+    }
+    sync();
+    window.addEventListener("resize", sync);
+});
+</script>
+
+{% endblock %}

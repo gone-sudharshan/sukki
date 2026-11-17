@@ -1,0 +1,40 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}AvSys Attendance{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{% static 'avsys_auth/img/favicon.png' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'avsys_auth/css/auth.css' %}">
+</head>
+<body class="{% block bodyclass %}auth{% endblock %}">
+{% block body %}
+{% include "portal/_scene.html" %}
+
+<main class="stage">
+  <div class="rise">
+    <section class="card" id="card">
+      <div class="glare" aria-hidden="true"></div>
+      <!-- <div class="logo-wrap">
+        <img class="logo" src="{% static 'avsys_auth/img/avsys-logo.png' %}" alt="AvSys" width="1000" height="701">
+        <span class="logo-shadow" aria-hidden="true"></span>
+        <svg class="star s1" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12C16 13 13 16 12 24C11 16 8 13 0 12C8 11 11 8 12 0Z"/></svg>
+        <svg class="star s2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12C16 13 13 16 12 24C11 16 8 13 0 12C8 11 11 8 12 0Z"/></svg>
+      </div>
+      <p class="tagline">Smart Attendance · Better Workforce</p> -->
+      <div class="card-body">
+        {% if messages %}
+          <ul class="messages">{% for m in messages %}<li class="msg {{ m.tags }}">{{ m }}</li>{% endfor %}</ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </div>
+    </section>
+  </div>
+</main>
+<script src="{% static 'avsys_auth/js/auth.js' %}"></script>
+{% endblock %}
+</body>
+</html>

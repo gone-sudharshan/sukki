@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance | Attendance Sync{% endblock %}
+
+{% block content %}
+<div class="mb-4"><h1 class="h3 mb-1 page-title">Attendance</h1><p class="text-secondary mb-0">Attendance history for all employees.</p></div>
+<div class="card shadow-sm emp-table-card"><div class="card-body">
+  <div class="table-responsive">
+    <table class="table emp-table table-striped table-hover align-middle js-data-table w-100">
+      <thead><tr><th>Date</th><th>Employee</th><th>Check-in</th><th>Check-out</th><th>Duration</th></tr></thead>
+      <tbody>
+        {% for record in records %}
+          <tr>
+            <td data-order="{{ record.work_date|date:'Y-m-d' }}">{{ record.work_date|date:"d M Y" }}</td>
+            <td>{{ record.user.get_full_name|default:record.user.username }}</td>
+            <td>{{ record.check_in_at|date:"g:i A"|default:"-" }}</td>
+            <td>{{ record.check_out_at|date:"g:i A"|default:"-" }}</td>
+            <td>{% if record.work_duration %}{{ record.work_duration }}{% else %}-{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if not records %}<p class="text-secondary mb-0">No attendance history yet.</p>{% endif %}
+  </div>
+</div></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(function () { $(".js-data-table").DataTable({ pageLength: 25, order: [[0, "desc"]] }); });
+</script>
+{% endblock %}

@@ -1,0 +1,753 @@
+{% load static %}<!doctype html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>{% block title %}Attendance Sync{% endblock %}</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <link href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.css" rel="stylesheet">
+
+  <link href="{% static 'avsys_auth/css/theme.css' %}" rel="stylesheet">
+
+
+
+  <!-- Layout overrides: indigo nav, violet accent, light page, green for actions -->
+
+<style>
+
+    /* =====================================================================
+
+       PALETTE: only the 10 values in each block below need to change.
+
+       Soft tints, dark shades, borders and page colour are derived from them.
+
+       Default = "Royal Navy & Sky" (colours of the AvSys lobby image). Switch with <html data-theme="teal|emerald|berry">
+
+       ===================================================================== */
+
+    :root {
+
+      --ap-nav-bg:   #0b2a6f;   /* royal navy: used for dark text/shades */
+
+      --ap-blue:     #1d5fd8;   /* royal blue (brand) */
+
+      --ap-blue-rgb: 29, 95, 216;
+
+      --ap-accent:   #38a8f5;   /* sky blue */
+
+      --ap-accent-rgb: 56, 168, 245;
+
+      --ap-green:    #16a974;   /* fingerprint green: on time / check in */
+
+      --ap-green-rgb: 22, 169, 116;
+
+      --ap-warn:     #f5a623;   /* late */
+
+      --ap-sky:      #7c9cff;
+
+      --ap-ink:      #172554;
+
+    }
+
+    :root[data-theme="teal"] {   /* Teal & Gold */
+
+      --ap-nav-bg: #0c3b4a; --ap-blue: #0c8aa0; --ap-blue-rgb: 12, 138, 160;
+
+      --ap-accent: #f2b134; --ap-accent-rgb: 242, 177, 52;
+
+      --ap-green: #2bb673; --ap-green-rgb: 43, 182, 115;
+
+      --ap-warn: #f08a4b; --ap-sky: #3b9ae1; --ap-ink: #12303a;
+
+    }
+
+    :root[data-theme="emerald"] {   /* Emerald & Champagne */
+
+      --ap-nav-bg: #0f3d2e; --ap-blue: #0f8a5f; --ap-blue-rgb: 15, 138, 95;
+
+      --ap-accent: #d9a441; --ap-accent-rgb: 217, 164, 65;
+
+      --ap-green: #2fb36d; --ap-green-rgb: 47, 179, 109;
+
+      --ap-warn: #e8833a; --ap-sky: #3b82f6; --ap-ink: #10281f;
+
+    }
+
+    :root[data-theme="berry"] {   /* Plum & Apricot */
+
+      --ap-nav-bg: #3f1d4a; --ap-blue: #a23b72; --ap-blue-rgb: 162, 59, 114;
+
+      --ap-accent: #f4a259; --ap-accent-rgb: 244, 162, 89;
+
+      --ap-green: #2f9e6e; --ap-green-rgb: 47, 158, 110;
+
+      --ap-warn: #e67e3c; --ap-sky: #5b8def; --ap-ink: #2a1230;
+
+    }
+
+
+
+    /* ---- derived colours (do not edit) ---- */
+
+    :root {
+
+      --ap-red: #e5566d;
+
+      --ap-nav-bg-dark: color-mix(in srgb, var(--ap-nav-bg) 70%, #000);
+
+      --ap-nav-bg-light: color-mix(in srgb, var(--ap-nav-bg) 65%, var(--ap-blue));
+
+      --ap-blue-dark:   color-mix(in srgb, var(--ap-blue) 80%, #000);
+
+      --ap-blue-deeper: var(--ap-nav-bg);
+
+      --ap-blue-soft:   color-mix(in srgb, var(--ap-blue) 12%, #fff);
+
+      --ap-accent-dark: color-mix(in srgb, var(--ap-accent) 80%, #000);
+
+      --ap-accent-soft: color-mix(in srgb, var(--ap-accent) 22%, #fff);
+
+      --ap-page:        color-mix(in srgb, var(--ap-blue) 4%, #fff);
+
+      --ap-card:        #fff;
+
+      --ap-beige:       var(--ap-page);
+
+      --ap-beige-mid:   color-mix(in srgb, var(--ap-blue) 8%, #fff);
+
+      --ap-beige-dark:  color-mix(in srgb, var(--ap-blue) 40%, #fff);
+
+      --ap-beige-ink:   var(--ap-blue-dark);
+
+      --ap-green-dark:  color-mix(in srgb, var(--ap-green) 75%, #000);
+
+      --ap-green-soft:  color-mix(in srgb, var(--ap-green) 16%, #fff);
+
+      --ap-warn-ink:    color-mix(in srgb, var(--ap-warn) 55%, #000);
+
+      --ap-warn-soft:   color-mix(in srgb, var(--ap-warn) 17%, #fff);
+
+      --ap-red-ink:     color-mix(in srgb, var(--ap-red) 65%, #000);
+
+      --ap-red-soft:    color-mix(in srgb, var(--ap-red) 14%, #fff);
+
+      --ap-sky-ink:     color-mix(in srgb, var(--ap-sky) 70%, #000);
+
+      --ap-sky-soft:    color-mix(in srgb, var(--ap-sky) 15%, #fff);
+
+      --ap-muted:       color-mix(in srgb, var(--ap-ink) 60%, #fff);
+
+      --ap-line:        color-mix(in srgb, var(--ap-blue) 15%, #fff);
+
+
+
+      --bs-primary: var(--ap-blue);
+
+      --bs-primary-rgb: var(--ap-blue-rgb);
+
+      --bs-link-color: var(--ap-blue-dark);
+
+      --bs-link-hover-color: var(--ap-nav-bg);
+
+      --bs-success: var(--ap-green);
+
+      --bs-success-rgb: var(--ap-green-rgb);
+
+      --bs-body-color: var(--ap-ink);
+
+      --bs-border-color: var(--ap-line);
+
+    }
+
+
+
+    body { background: var(--ap-page); color: var(--ap-ink); }
+
+    .ap-main { background: var(--ap-page); }
+
+    .text-primary { color: var(--ap-blue) !important; }
+
+    .text-success { color: var(--ap-green-dark) !important; }
+
+    .text-secondary { color: var(--ap-muted) !important; }
+
+
+
+    /* ---------- Cards ---------- */
+
+    .card { background: var(--ap-card); border: 1px solid var(--ap-line); border-radius: 16px; box-shadow: 0 4px 16px rgba(var(--ap-blue-rgb), .08); }
+
+    .card-header-plain { color: var(--ap-ink); border-bottom: 1px solid var(--ap-line); background: transparent; }
+
+
+
+    /* ---------- Buttons ---------- */
+
+    .btn { border-radius: 12px; }
+
+    .btn-primary { --bs-btn-bg: var(--ap-blue); --bs-btn-border-color: var(--ap-blue); --bs-btn-hover-bg: var(--ap-blue-dark); --bs-btn-hover-border-color: var(--ap-blue-dark); --bs-btn-active-bg: var(--ap-nav-bg); --bs-btn-active-border-color: var(--ap-nav-bg); }
+
+    .btn-outline-primary { --bs-btn-color: var(--ap-blue-dark); --bs-btn-border-color: var(--ap-beige-dark); --bs-btn-hover-bg: var(--ap-blue); --bs-btn-hover-border-color: var(--ap-blue); --bs-btn-hover-color: #fff; --bs-btn-active-bg: var(--ap-blue-dark); --bs-btn-active-border-color: var(--ap-blue-dark); }
+
+    .btn-success { --bs-btn-bg: var(--ap-green); --bs-btn-border-color: var(--ap-green); --bs-btn-hover-bg: var(--ap-green-dark); --bs-btn-hover-border-color: var(--ap-green-dark); --bs-btn-active-bg: var(--ap-green-dark); --bs-btn-active-border-color: var(--ap-green-dark); --bs-btn-color: #fff; --bs-btn-hover-color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(var(--ap-green-rgb), .35); }
+
+    .btn-beige { background: #fff; color: var(--ap-nav-bg); border: 1px solid #fff; font-weight: 600; }
+
+    .btn-beige:hover, .btn-beige:focus { background: var(--ap-accent-soft); color: var(--ap-nav-bg); border-color: var(--ap-accent-soft); }
+
+    .progress { background: var(--ap-blue-soft); border-radius: 999px; }
+
+    .progress-bar { background: linear-gradient(90deg, var(--ap-blue), var(--ap-accent)); border-radius: 999px; }
+
+
+
+    /* ---------- Soft badges ---------- */
+
+    .badge-soft-green { background: var(--ap-green-soft); color: var(--ap-green-dark); font-weight: 600; }
+
+    .badge-soft-beige { background: var(--ap-warn-soft);  color: var(--ap-warn-ink);   font-weight: 600; }
+
+    .badge-soft-blue  { background: var(--ap-blue-soft);  color: var(--ap-blue-dark);  font-weight: 600; }
+
+    .badge-soft-red   { background: var(--ap-red-soft);   color: var(--ap-red-ink);    font-weight: 600; }
+
+    /* ---------- Employee-table look (blue header, tinted stripes) - reuse with class "emp-table" ---------- */
+    .emp-table-card { border: 1px solid #cfe0f5; border-top: 4px solid #2271e0; border-radius: 12px; background: #fff; box-shadow: 0 4px 16px rgba(34, 113, 224, .08) !important; }
+    .emp-table-card .dt-container .dt-search, .emp-table-card .dt-container .dt-length { margin-bottom: 14px; }
+    .emp-table-card .dt-container .dt-info, .emp-table-card .dt-container .dt-paging { margin-top: 14px; }
+    .emp-table-card .dt-container label, .emp-table-card .dt-container .dt-info { color: #1b2b4a; }
+    .emp-table-card .dt-container input, .emp-table-card .dt-container select { border-color: #cfe0f5; border-radius: 8px; }
+    .emp-table-card .dt-container input:focus, .emp-table-card .dt-container select:focus { border-color: #2271e0; outline: 0; box-shadow: 0 0 0 .2rem rgba(34, 113, 224, .18); }
+    .emp-table-card .dt-container .dt-paging .dt-paging-button.current,
+    .emp-table-card .dt-container .dt-paging .dt-paging-button.current:hover { background: #2271e0 !important; border-color: #2271e0 !important; color: #fff !important; }
+    .emp-table-card .dt-container .dt-paging .dt-paging-button:hover:not(.current):not(.disabled) { background: #eef4fc !important; border-color: #cfe0f5 !important; color: #1a5bc0 !important; }
+    table.emp-table.table { --bs-table-bg: #fff; --bs-table-striped-bg: #eef4fc; --bs-table-color: #1b2b4a; --bs-table-border-color: #cfe0f5; }
+    table.emp-table.table > thead > tr > th,
+    table.emp-table.table > tbody > tr > td { padding: 12px 20px; font-size: 14px; text-align: left; vertical-align: middle; }
+    table.emp-table.table > thead > tr > th { background: #2271e0; color: #fff; white-space: nowrap; border-bottom: 0; }
+    table.emp-table.table > tbody > tr:hover > * { --bs-table-bg-state: #dce9f9; }
+
+
+
+    /* ---------- Top bar (bright blue, light feel) ---------- */
+
+    .ap-topbar {
+
+      background: linear-gradient(90deg, var(--ap-blue), color-mix(in srgb, var(--ap-blue) 55%, var(--ap-accent)));
+
+      color: #fff;
+
+      border-bottom: 0;
+
+      box-shadow: 0 4px 16px rgba(var(--ap-blue-rgb), .25);
+
+    }
+
+    .ap-topbar .ap-brand { color: #fff; display: flex; align-items: center; gap: .6rem; }
+
+    /* LOGO (img/avsys-logo.png) on a white rounded tile so its colours stay visible */
+
+    .ap-topbar .ap-brand-mark { display: none; }
+
+    .ap-topbar .ap-logo { height: 42px; width: auto; max-width: 170px; object-fit: contain; display: block; background: #fff; border-radius: 12px; padding: 4px 8px; box-shadow: 0 0 0 3px rgba(255, 255, 255, .25); }
+
+    .ap-topbar .ap-toggler { color: #fff; border: 1px solid rgba(255, 255, 255, .5); background: transparent; }
+
+    .ap-topbar .ap-user-btn { color: #fff; }
+
+    .ap-topbar .ap-user-btn:hover, .ap-topbar .ap-user-btn:focus { color: #fff; background: rgba(255, 255, 255, .16); }
+
+    .ap-topbar .ap-user-btn small { color: rgba(255, 255, 255, .85) !important; }
+
+    .ap-avatar { background: var(--ap-blue-soft); color: var(--ap-blue-dark); font-weight: 700; }
+
+    .ap-topbar .ap-avatar { background: #fff; color: var(--ap-blue); }
+
+    .ap-avatar.soft { background: var(--ap-blue-soft); color: var(--ap-blue-dark); }
+
+    .ap-topbar .ap-done-chip { background: rgba(255, 255, 255, .2); color: #fff; border: 1px solid rgba(255, 255, 255, .45); }
+
+
+
+    /* ---------- Side bar (soft sky-blue with colourful icon tiles) ---------- */
+
+    .side-wrap { --bs-offcanvas-width: 280px; border: 0; }
+
+    .side-nav {
+
+      width: 100%; height: 100%;
+
+      display: flex; flex-direction: column;
+
+      padding: 1.25rem .9rem;
+
+      position: relative; overflow: hidden;
+
+      background: linear-gradient(170deg, color-mix(in srgb, var(--ap-blue) 14%, #fff) 0%, color-mix(in srgb, var(--ap-accent) 26%, #fff) 60%, color-mix(in srgb, var(--ap-green) 16%, #fff) 100%);
+
+      color: var(--ap-ink);
+
+    }
+
+    .side-nav::after { /* soft sky glow bottom-right, like the waves in the lobby image */
+
+      content: ""; position: absolute; right: -80px; bottom: -80px; width: 240px; height: 240px; border-radius: 50%;
+
+      background: radial-gradient(circle, rgba(var(--ap-accent-rgb), .35), transparent 70%); pointer-events: none;
+
+    }
+
+    .side-nav::before { /* coloured strip along the top, same colours as the top bar */
+
+      content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; z-index: 2;
+
+      background: linear-gradient(90deg, var(--ap-blue), var(--ap-accent), var(--ap-green));
+
+    }
+
+    .side-nav > * { position: relative; z-index: 1; }
+
+
+
+    /* ===== DESKTOP: sidebar is FIXED to the left (under the top bar) and never scrolls ===== */
+
+    @media (min-width: 992px) {
+
+      .ap-shell > .side-wrap.offcanvas-lg {
+
+        position: fixed;
+
+        top: var(--ap-topbar-h, 64px);
+
+        left: 0;
+
+        bottom: 0;
+
+        width: var(--ap-sidebar-w, 256px) !important;
+
+        height: auto !important;
+
+        z-index: 1020;
+
+      }
+
+      .side-nav {
+
+        position: relative;
+
+        width: 100%;
+
+        height: 100%;
+
+        overflow: hidden;                 /* no scrolling, no scrollbar */
+
+        border-right: 1px solid var(--ap-line);
+
+      }
+
+      /* page content sits to the right of the fixed sidebar */
+
+      .ap-shell > .ap-main { margin-left: var(--ap-sidebar-w, 256px); }
+
+    }
+
+    /* short screens: tighten spacing so every menu item still fits without scrolling */
+
+    @media (min-width: 992px) and (max-height: 700px) {
+
+      .side-nav { padding: .8rem .8rem; }
+
+      .side-link { padding: .3rem .55rem; margin-bottom: .15rem; }
+
+      .side-link i { width: 30px; height: 30px; font-size: 1rem; }
+
+      .side-label { margin: .4rem 0 .3rem; }
+
+    }
+
+
+
+    .side-profile { display: flex; align-items: center; gap: .7rem; padding: .6rem .7rem; margin-bottom: .9rem; background: #fff; border: 1px solid var(--ap-line); border-radius: 14px; box-shadow: 0 4px 12px rgba(var(--ap-blue-rgb), .08); }
+
+    .side-profile .ap-avatar { background: linear-gradient(135deg, var(--ap-blue), var(--ap-accent)); color: #fff; }
+
+    .side-profile small { color: var(--ap-muted); text-transform: capitalize; }
+
+    .side-profile .btn-close-white { filter: none; }
+
+    .side-label { font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ap-blue-dark); padding: 0 .75rem; margin: .9rem 0 .5rem; display: flex; align-items: center; gap: .5rem; }
+
+    .side-label::before { content: ""; width: 18px; height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--ap-blue), var(--ap-accent)); }
+
+
+
+    .side-link {
+
+      --tile: var(--ap-blue); --tile-soft: var(--ap-blue-soft);
+
+      display: flex; align-items: center; gap: .75rem; width: 100%;
+
+      padding: .5rem .65rem; margin-bottom: .3rem; border: 0; border-radius: 14px;
+
+      background: transparent; color: var(--ap-ink);
+
+      text-decoration: none; font-weight: 500; text-align: left; transition: *background* .15s, transform .15s, box-shadow .15s;
+
+    }
+
+    /* each menu item gets its own matching colour tile */
+
+    .side-nav nav a:nth-of-type(1) { --tile: var(--ap-blue);  --tile-soft: var(--ap-blue-soft); }
+
+    .side-nav nav a:nth-of-type(2) { --tile: var(--ap-green); --tile-soft: var(--ap-green-soft); }
+
+    .side-nav nav a:nth-of-type(3) { --tile: var(--ap-sky);   --tile-soft: var(--ap-sky-soft); }
+
+    .side-nav nav a:nth-of-type(4) { --tile: var(--ap-warn);  --tile-soft: var(--ap-warn-soft); }
+
+    .side-link i {
+
+      width: 36px; height: 36px; flex: none; display: grid; place-items: center;
+
+      font-size: 1.1rem; border-radius: 11px; background: var(--tile-soft); color: var(--tile);
+
+      box-shadow: 0 2px 6px rgba(var(--ap-blue-rgb), .10); transition: *background* .15s, color .15s;
+
+    }
+
+    .side-link:hover { background: rgba(255, 255, 255, .85); transform: translateX(3px); box-shadow: 0 4px 12px rgba(var(--ap-blue-rgb), .10); color: var(--ap-ink); }
+
+    .side-link:hover i { background: var(--tile); color: #fff; }
+
+    .side-link.active { background: linear-gradient(135deg, var(--ap-blue), color-mix(in srgb, var(--ap-blue) 45%, var(--ap-accent))); color: #fff; font-weight: 600; box-shadow: 0 8px 18px rgba(var(--ap-blue-rgb), .32); transform: none; }
+
+    .side-link.active i { background: #fff; color: var(--ap-blue); box-shadow: none; }
+
+
+
+    .side-logout { margin-top: auto; padding-top: .9rem; border-top: 1px solid var(--ap-line); }
+
+    .side-logout .side-link i { background: var(--ap-red-soft); color: var(--ap-red-ink); }
+
+    .side-logout .side-link:hover { background: var(--ap-red-soft); color: var(--ap-red-ink); }
+
+    .side-logout .side-link:hover i { background: var(--ap-red); color: #fff; }
+
+
+
+    /* copyright under Logout */
+
+    .side-copy { text-align: center; font-size: .72rem; line-height: 1.35; color: var(--ap-muted); padding-top: .8rem; margin-top: .6rem; }
+
+    .side-copy strong { color: var(--ap-blue-dark); font-weight: 600; }
+
+  
+    /* FIXED NAVBAR AND RESPONSIVE CONTENT */
+    :root { --ap-topbar-h: 64px; --ap-sidebar-w: 256px; }
+    html { scroll-padding-top: 76px; }
+    .ap-topbar {
+      position: fixed !important; top: 0; left: 0; right: 0;
+      width: 100%; height: var(--ap-topbar-h); z-index: 1050;
+    }
+    .ap-shell { padding-top: var(--ap-topbar-h); min-height: 100vh; }
+    .ap-main { min-height: calc(100vh - var(--ap-topbar-h)); }
+    @media (min-width: 992px) {
+      .ap-shell > .side-wrap.offcanvas-lg {
+        position: fixed !important; top: var(--ap-topbar-h) !important;
+        left: 0; bottom: 0; width: var(--ap-sidebar-w) !important;
+        height: calc(100vh - var(--ap-topbar-h)) !important;
+        z-index: 1020;
+      }
+      .ap-shell > .ap-main { margin-left: var(--ap-sidebar-w); }
+    }
+    @media (max-width: 991.98px) {
+      .ap-shell > .ap-main { margin-left: 0; }
+    }
+</style>
+
+  {% block extra_head %}{% endblock %}
+
+</head>
+
+<body>
+
+
+
+  <!-- ================= TOP NAV: logo (left) | check-in/out + profile (right) ================= -->
+
+  <header class="ap-topbar">
+
+    <div class="container-fluid h-100 d-flex align-items-center gap-2 gap-sm-3">
+
+
+
+      <!-- Mobile only: opens the side nav -->
+
+      <button class="btn ap-toggler d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar" aria-label="Open navigation">
+
+        <i class="bi bi-list fs-5"></i>
+
+      </button>
+
+
+
+      <!-- Logo -->
+
+      <a class="ap-brand me-auto" href="{% url 'dashboard' %}">
+
+        <img src="{% static 'avsys_auth/img/avsys-logo.png' %}" alt="AVSYS" class="ap-logo">
+
+        <span class="d-none d-sm-inline">Attendance Sync</span>
+
+      </a>
+
+
+
+      <!-- Check in -> (after clicking) -> Check out -> Day complete  (employees AND admins) -->
+
+      {% if request.user.is_authenticated %}
+
+        {% if nav_attendance_state != "working" and nav_attendance_state != "done" %}
+
+          <form method="post" action="{% url 'check_in' %}">
+
+            {% csrf_token %}
+
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+            <button type="submit" class="btn btn-success btn-punch">
+
+              <i class="bi bi-box-arrow-in-right me-1"></i><span class="label">Check in</span>
+
+            </button>
+
+          </form>
+
+        {% elif nav_attendance_state == "working" %}
+
+          <form method="post" action="{% url 'check_out' %}" onsubmit="return confirm('Check out for today?');">
+
+            {% csrf_token %}
+
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+            <button type="submit" class="btn btn-beige btn-punch" title="Checked in at {{ nav_attendance.check_in_at|date:'g:i A' }}">
+
+              <i class="bi bi-box-arrow-right me-1"></i><span class="label">Check out</span>
+
+            </button>
+
+          </form>
+
+        {% elif nav_attendance_state == "done" %}
+
+          <span class="ap-done-chip" title="In {{ nav_attendance.check_in_at|date:'g:i A' }} &middot; Out {{ nav_attendance.check_out_at|date:'g:i A' }}">
+
+            <i class="bi bi-check-circle-fill me-1"></i><span class="d-none d-sm-inline">Day complete &middot; </span>{{ nav_attendance.check_out_at|date:"g:i A" }}
+
+          </span>
+
+        {% endif %}
+
+      {% endif %}
+
+
+
+      <!-- Profile -->
+
+      <div class="dropdown">
+
+        <button class="btn ap-user-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+
+          <span class="ap-avatar">{{ request.user.get_full_name|default:request.user.username|slice:":2"|upper }}</span>
+
+          <span class="d-none d-md-block text-start lh-sm">
+
+            <span class="d-block fw-semibold">{{ request.user.get_full_name|default:request.user.username }}</span>
+
+            <small class="text-capitalize">{{ request.user.role }}</small>
+
+          </span>
+
+          <i class="bi bi-chevron-down small d-none d-md-inline"></i>
+
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+
+          <li class="px-3 py-2">
+
+            <div class="fw-semibold">{{ request.user.get_full_name|default:request.user.username }}</div>
+
+            <small class="text-secondary text-capitalize">{{ request.user.role }}</small>
+
+            {% if request.user.employee_profile %}<div class="small text-secondary">ID: {{ request.user.employee_profile.employee_id }}</div>{% endif %}
+
+            {% if request.user.email %}<div class="small text-secondary">{{ request.user.email }}</div>{% endif %}
+
+          </li>
+
+        </ul>
+
+      </div>
+
+    </div>
+
+  </header>
+
+
+
+  <div class="ap-shell">
+
+
+
+    <!-- ================= SIDE NAV (one element: fixed sidebar on desktop, slide-out on mobile) ================= -->
+
+    {% url 'my_attendance' as my_attendance_url %}
+
+    <aside class="offcanvas-lg offcanvas-start side-wrap" tabindex="-1" id="mobileSidebar" aria-label="Main navigation">
+
+      {% with current=request.resolver_match.url_name %}
+
+      <div class="side-nav">
+
+
+
+        <div class="side-profile d-lg-none">
+
+          <span class="ap-avatar">{{ request.user.get_full_name|default:request.user.username|slice:":2"|upper }}</span>
+
+          <div class="lh-sm flex-grow-1">
+
+            <div class="fw-semibold">{{ request.user.get_full_name|default:request.user.username }}</div>
+
+            <small>{{ request.user.role }}</small>
+
+          </div>
+
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#mobileSidebar" aria-label="Close"></button>
+
+        </div>
+
+
+
+        <nav class="d-flex flex-column">
+
+          <div class="side-label">Menu</div>
+
+
+
+          <a class="side-link {% if current == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+
+            <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
+
+          </a>
+
+
+
+          <a class="side-link {% if current == 'my_attendance' %}active{% endif %}" href="{{ my_attendance_url|default:'#' }}">
+
+            <i class="bi bi-calendar-check-fill"></i><span>My attendance</span>
+
+          </a>
+
+
+
+          {% if request.user.role == "admin" %}
+
+            <a class="side-link {% if current == 'employee_list' or current == 'employee_create' or current == 'employee_edit' %}active{% endif %}" href="{% url 'employee_list' %}">
+
+              <i class="bi bi-people-fill"></i><span>Employees</span>
+
+            </a>
+
+            <a class="side-link {% if current == 'attendance_list' %}active{% endif %}" href="{% url 'attendance_list' %}">
+
+              <i class="bi bi-calendar-check"></i><span>Attendance</span>
+
+            </a>
+
+            <a class="side-link {% if current == 'audit_event_list' %}active{% endif %}" href="{% url 'audit_event_list' %}">
+
+              <i class="bi bi-shield-check"></i><span>Audit trail</span>
+
+            </a>
+
+          {% endif %}
+
+          <a class="side-link {% if current == 'profile' %}active{% endif %}" href="{% url 'profile' %}">
+
+            <i class="bi bi-grid-1x2-fill"></i><span>Profile</span>
+
+          </a>
+
+        </nav>
+
+
+
+        <form method="post" action="{% url 'logout' %}" class="side-logout">
+
+          {% csrf_token %}
+
+          <button type="submit" class="side-link mb-0"><i class="bi bi-box-arrow-left"></i><span>Logout</span></button>
+
+          <div class="side-copy">&copy; {% now "Y" %} <strong>AvSys International(India) Pvt.Ltd</strong></div>
+
+        </form>
+
+
+
+      </div>
+
+      {% endwith %}
+
+    </aside>
+
+
+
+    <!-- ================= PAGE CONTENT ================= -->
+
+    <main class="ap-main">
+
+      {% for message in messages %}
+
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+
+          {{ message }}
+
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+        </div>
+
+      {% endfor %}
+
+      {% block content %}{% endblock %}
+
+    </main>
+
+  </div>
+
+
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script src="https://cdn.datatables.net/2.3.4/js/dataTables.js"></script>
+
+  <script src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.js"></script>
+
+  {% block scripts %}{% endblock %}
+
+</body>
+
+</html>

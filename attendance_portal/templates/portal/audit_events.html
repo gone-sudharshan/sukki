@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Audit trail | Attendance Sync{% endblock %}
+
+{% block content %}
+<div class="audit-page">
+  <style>
+    .audit-page {
+      --audit-blue: var(--ap-blue);
+      --audit-ink: var(--ap-ink);
+      --audit-tint: var(--ap-blue-soft);
+      --audit-line: var(--ap-line);
+    }
+    .audit-page h1 { color: var(--audit-blue); font-weight: 700; }
+    .audit-page .card {
+      border: 1px solid var(--audit-line);
+      border-top: 4px solid var(--audit-blue);
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(var(--ap-blue-rgb), .08);
+    }
+    #auditTable { min-width: 700px; }
+    #auditTable.table > thead > tr > th,
+    #auditTable.table > tbody > tr > td {
+      padding: 12px 16px;
+      font-size: 14px;
+      text-align: left;
+      vertical-align: middle;
+    }
+    #auditTable.table > thead > tr > th {
+      background: var(--audit-blue);
+      color: #fff;
+      white-space: nowrap;
+      border-bottom: 0;
+    }
+    #auditTable.table {
+      --bs-table-bg: #fff;
+      --bs-table-striped-bg: var(--audit-tint);
+      --bs-table-color: var(--audit-ink);
+      --bs-table-border-color: var(--audit-line);
+    }
+    #auditTable.table > tbody > tr:hover > * { --bs-table-bg-state: var(--ap-beige-mid); }
+    .audit-page .dt-container .dt-search,
+    .audit-page .dt-container .dt-length { margin-bottom: 14px; }
+    .audit-page .dt-container .dt-info,
+    .audit-page .dt-container .dt-paging { margin-top: 14px; }
+    .audit-page .dt-container input,
+    .audit-page .dt-container select { border-color: var(--audit-line); border-radius: 8px; }
+    .audit-page .dt-container input:focus,
+    .audit-page .dt-container select:focus {
+      border-color: var(--audit-blue);
+      box-shadow: 0 0 0 .2rem rgba(var(--ap-blue-rgb), .18);
+    }
+  </style>
+
+  <div class="mb-4">
+    <h1 class="h3 mb-1 page-title">Audit trail</h1>
+    <p class="text-secondary mb-0">Authentication and employee/attendance changes.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table id="auditTable" class="table table-striped align-middle mb-0" style="width:100%">
+          <thead>
+            <tr>
+              <th>Date &amp; time</th>
+              <th>Event</th>
+              <th>Account</th>
+              <th>Summary</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for event in events %}
+              <tr>
+                <td class="text-nowrap">{{ event.occurred_at|date:"Y-m-d H:i:s" }}</td>
+                <td><span class="badge text-bg-{{ event.badge_class }}">{{ event.action_label }}</span></td>
+                <td>
+                  <div class="fw-semibold">{{ event.actor_label }}</div>
+                  {% if event.target_label != event.actor_label %}
+                    <div class="small text-secondary">Affected: {{ event.target_label }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  <div>{{ event.summary }}</div>
+                  {% if event.ip_address %}<div class="small text-secondary mt-1">IP {{ event.ip_address }}</div>{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(function () {
+    $("#auditTable").DataTable({
+      pageLength: 10,
+      order: [[0, "desc"]],
+      language: { emptyTable: "No audit events recorded yet." }
+    });
+  });
+</script>
+{% endblock %}
