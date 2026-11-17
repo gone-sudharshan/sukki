@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %} Purchase Requests {% endblock title %}
+{% block content %}
+{% include "po_requests/_po_common.html" %}
+{{ vendors|json_script:"vendors-data" }}
+{{ materials|json_script:"materials-data" }}
+
+<style>
+  .po-row {
+    display: grid; grid-template-columns: 38px minmax(0, 1fr) 230px 44px; gap: .6rem; align-items: center;
+    padding: .55rem .6rem; border: 1px solid #e6efe9; border-radius: 10px; background: #f8fbf9; margin-bottom: .55rem;
+  }
+  .po-row-no {
+    width: 30px; height: 30px; border-radius: 50%; background: #3a6351; color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .8rem;
+  }
+  .po-row .input-group-text { background: #dcebe2; color: #1f4535; font-weight: 600; min-width: 58px; justify-content: center; }
+  .po-row .choices { margin-bottom: 0; }
+  .po-row .btn-delete { padding: 6px 0; width: 38px; }
+  .po-hint { font-size: .78rem; color: #6b7f74; }
+  @media (max-width: 768px) {
+    .po-row { grid-template-columns: 30px 1fr 40px; }
+    .po-row .po-row-qty { grid-column: 2 / 3; }
+    .po-row .remove-row { grid-row: 1; grid-column: 3; }
+  }
+</style>
+
+<div class="procurement-page mt-1">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 mb-2">
+    <h2><i class="bi bi-cart-plus"></i> Purchase Requests</h2>
+  </div>
+
+  <div id="poStats" class="po-stats"></div>
+
+  <!-- ============ CREATE ============ -->
+  <div class="card po-card shadow-sm">
+    <div class="po-card-head">
+      <h5><i class="bi bi-plus-circle me-2"></i>Create Purchase Order</h5>
+      <span class="po-hint" style="color:#dcebe2">Goes to Procurement for rates, then GM, Director and Finance</span>
+    </div>
+    <div class="po-card-body">
+      <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+          <label class="po-form-label">PO Number</label>
+          <input type="text" id="poNumber" class="form-control bg-light fw-bold" value="{{ next_po_number }}" readonly>
+          <div class="po-hint mt-1">Final number is assigned when you submit.</div>
+        </div>
+        <div class="col-12 col-md-8">
+          <label class="po-form-label" for="vendorSelect">Vendor <span class="text-danger">*</span></label>
+          <select id="vendorSelect" class="form-select"></select>
+        </div>
+      </div>
+
+      <label class="po-form-label">Raw Materials &amp; Quantity <span class="text-danger">*</span></label>
+      <div id="itemRows"></div>
+      <button type="button" id="addRowBtn" class="btn-custom btn-submit mb-3">
+        <i class="bi bi-plus-lg me-1"></i> Add Material
+      </button>
+
+      <div class="mb-3">
+        <label class="po-form-label" for="poRemarks">Remarks <span class="po-hint">(optional)</span></label>
+        <textarea id="poRemarks" class="form-control" rows="2" maxlength="255" placeholder="Anything Procurement should know"></textarea>
+      </div>
+
+      <div class="d-flex justify-content-center gap-2">
+        <button type="button" id="submitPoBtn" class="btn-custom btn-submit px-4">
+          <i class="bi bi-send me-1"></i> Submit to Procurement
+        </button>
+        <button type="button" id="resetPoBtn" class="btn-custom btn-delete px-4">
+          <i class="bi bi-arrow-clockwise me-1"></i> Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HISTORY ============ -->
+  <div class="card po-card shadow-sm">
+    <div class="po-card-head"><h5><i class="bi bi-clock-history me-2"></i>Purchase Requests</h5></div>
+    <div class="po-card-body">
+      <div class="table-responsive">
+        <table id="poTable" class="display stripe hover nowrap w-100"><thead>
+          <tr><th>PO Number</th><th>Vendor</th><th>Materials</th><th>Status</th><th>Created By</th><th>Created At</th><th>Details</th></tr>
+        </thead></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const PO = window.PO;
+  const vendors = JSON.parse(document.getElementById("vendors-data").textContent);
+  const materials = JSON.parse(document.getElementById("materials-data").textContent);
+  const matById = {};
+  materials.forEach((m) => { matById[m.id] = m; });
+
+  // ---------- stats + table ----------
+  PO.stats("poStats", [
+    { label: "Total Requests", icon: "bi-collection", color: "#3a6351", test: () => true },
+    { label: "With Procurement", icon: "bi-hourglass-split", color: "#d6961e", test: (p) => p.status === "Procurement Pending" },
+    { label: "In Approval", icon: "bi-person-check", color: "#1976d2", test: (p) => p.status === "GM Approval" || p.status === "Director Approval" },
+    { label: "With Finance", icon: "bi-cash-coin", color: "#7b1fa2", test: (p) => p.status === "Finance Approval" || p.status === "Completed" },
+    { label: "Rejected", icon: "bi-x-octagon", color: "#c62828", test: (p) => p.status === "Rejected" },
+  ]);
+
+  PO.table("#poTable", [
+    { data: "po_number", render: (d) => `<b>${PO.esc(d)}</b>` },
+    { data: "vendor", render: (d) => PO.esc(d) },
+    { data: "item_count" },
+    { data: "status", render: (d) => PO.chip(d) },
+    { data: "created_by", render: (d) => PO.esc(d) },
+    { data: "created_at" },
+    { data: null, orderable: false, render: (d, t, p) => PO.viewBtn(p) },
+  ]);
+
+  // ---------- vendor dropdown ----------
+  const vendorSel = document.getElementById("vendorSelect");
+  vendorSel.innerHTML = '<option value="">Select vendor</option>' +
+    vendors.map((v) => `<option value="${v.id}">${PO.esc(v.name)}</option>`).join("");
+  const vendorChoices = new Choices(vendorSel, {
+    searchEnabled: true, shouldSort: false, itemSelectText: "", placeholder: true,
+    placeholderValue: "Select vendor", searchPlaceholderValue: "Search vendor", allowHTML: false,
+  });
+
+  // ---------- item rows ----------
+  const rowsEl = document.getElementById("itemRows");
+  let rowSeq = 0;
+
+  function renumber() {
+    rowsEl.querySelectorAll(".po-row").forEach((r, i) => { r.querySelector(".po-row-no").textContent = i + 1; });
+  }
+
+  function addRow() {
+    const id = ++rowSeq;
+    const div = document.createElement("div");
+    div.className = "po-row";
+    div.innerHTML = `
+      <div class="po-row-no"></div>
+      <div class="po-row-mat"><select class="form-select mat-select" id="mat-${id}"></select></div>
+      <div class="po-row-qty">
+        <div class="input-group">
+          <input type="text" class="form-control qty-input numeric-input" maxlength="10" inputmode="decimal" placeholder="Quantity">
+          <span class="input-group-text unit-label">—</span>
+        </div>
+      </div>
+      <button type="button" class="btn-custom btn-delete remove-row" title="Remove"><i class="bi bi-trash"></i></button>`;
+    rowsEl.appendChild(div);
+
+    const sel = div.querySelector(".mat-select");
+    sel.innerHTML = '<option value="">Select raw material</option>' +
+      materials.map((m) => `<option value="${m.id}">${PO.esc(m.name)} (${PO.esc(m.unit)})</option>`).join("");
+    const ch = new Choices(sel, {
+      searchEnabled: true, shouldSort: false, itemSelectText: "", placeholder: true,
+      placeholderValue: "Select raw material", searchPlaceholderValue: "Search material", allowHTML: false,
+    });
+    div._choices = ch;
+    sel.addEventListener("change", () => {
+      const m = matById[sel.value];
+      div.querySelector(".unit-label").textContent = m ? m.unit : "—";
+    });
+    div.querySelector(".remove-row").addEventListener("click", () => {
+      if (rowsEl.children.length === 1) { PO.Toast.fire({ icon: "info", title: "At least one material is needed" }); return; }
+      ch.destroy(); div.remove(); renumber();
+    });
+    renumber();
+  }
+
+  function resetForm() {
+    Array.from(rowsEl.children).forEach((r) => { if (r._choices) r._choices.destroy(); });
+    rowsEl.innerHTML = "";
+    vendorChoices.removeActiveItems(); vendorChoices.setChoiceByValue("");
+    document.getElementById("poRemarks").value = "";
+    addRow();
+  }
+
+  document.getElementById("addRowBtn").addEventListener("click", addRow);
+  document.getElementById("resetPoBtn").addEventListener("click", resetForm);
+
+  // ---------- submit ----------
+  document.getElementById("submitPoBtn").addEventListener("click", function () {
+    const vendorId = vendorChoices.getValue(true);
+    if (!vendorId) { PO.Toast.fire({ icon: "warning", title: "Please select a vendor" }); return; }
+
+    const items = [], seen = new Set();
+    const rows = Array.from(rowsEl.querySelectorAll(".po-row"));
+    for (let i = 0; i < rows.length; i++) {
+      const mid = rows[i].querySelector(".mat-select").value;
+      const qraw = rows[i].querySelector(".qty-input").value.trim();
+      const n = i + 1;
+      if (!mid) { PO.Toast.fire({ icon: "warning", title: `Row ${n}: select a raw material` }); return; }
+      if (seen.has(mid)) { PO.Toast.fire({ icon: "warning", title: `Row ${n}: ${matById[mid].name} is added twice` }); return; }
+      seen.add(mid);
+      if (!/^\d{1,7}(\.\d{1,2})?$/.test(qraw) || Number(qraw) <= 0) {
+        PO.Toast.fire({ icon: "warning", title: `Row ${n}: enter a valid quantity (up to 2 decimals)` }); return;
+      }
+      items.push({ material_id: mid, quantity: qraw });
+    }
+
+    PO.run({ action: "create", vendor_id: vendorId, items: items, remarks: document.getElementById("poRemarks").value.trim() }, this);
+  });
+
+  addRow();
+})();
+</script>
+{% endblock content %}

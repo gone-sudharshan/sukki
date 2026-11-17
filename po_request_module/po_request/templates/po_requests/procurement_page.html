@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %} PO Requests {% endblock title %}
+{% block content %}
+{% include "po_requests/_po_common.html" %}
+
+<style>
+  #priceModal .modal-header { background: #3a6351; color: #fff; }
+  #priceModal .modal-title { color: #fff; font-weight: 700; }
+  #priceTable { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  #priceTable th { background: #3a6351; color: #fff; padding: 7px 8px; text-align: center; font-weight: 600; }
+  #priceTable td { border-bottom: 1px solid #e3e3e3; padding: 7px 8px; text-align: center; vertical-align: middle; }
+  #priceTable td.l { text-align: left; }
+  #priceTable td.r { text-align: right; white-space: nowrap; font-weight: 600; }
+  #priceTable .rate-input { max-width: 150px; margin: 0 auto; text-align: right; }
+  #priceTable tr.total td { background: #dcebe2; font-weight: 700; color: #1f4535; border-top: 2px solid #3a6351; font-size: 1rem; }
+  .po-head-info { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: .8rem; }
+  .po-head-info label { display: block; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #6b7f74; }
+  .po-head-info .v { font-weight: 700; color: #24413a; }
+</style>
+
+<div class="procurement-page mt-1">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 mb-2">
+    <h2><i class="bi bi-journal-check"></i> PO Requests</h2>
+  </div>
+
+  <div id="poStats" class="po-stats"></div>
+
+  <div class="card po-card shadow-sm">
+    <div class="po-card-head">
+      <h5><i class="bi bi-table me-2"></i>Requests from Stores</h5>
+      <span class="po-hint" style="color:#dcebe2;font-size:.78rem">Add the amount, then it goes to GM for approval</span>
+    </div>
+    <div class="po-card-body">
+      <div class="table-responsive">
+        <table id="poTable" class="display stripe hover nowrap w-100"><thead>
+          <tr><th>PO Number</th><th>Vendor</th><th>Raised By</th><th>Created At</th><th>Materials</th><th>Total</th><th>Status</th><th>Action</th></tr>
+        </thead></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ADD AMOUNT MODAL ============ -->
+<div class="modal fade" id="priceModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-currency-rupee me-1"></i>Add Amount &ndash; <span id="priceModalNo"></span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="po-head-info">
+          <div><label>Vendor</label><div class="v" id="priceVendor"></div></div>
+          <div><label>Raised by</label><div class="v" id="priceBy"></div></div>
+          <div><label>Raised on</label><div class="v" id="priceOn"></div></div>
+        </div>
+        <div class="table-responsive">
+          <table id="priceTable">
+            <thead><tr><th class="l">Material</th><th>Quantity</th><th>Rate (₹ per unit)</th><th>Amount (₹)</th></tr></thead>
+            <tbody id="priceBody"></tbody>
+          </table>
+        </div>
+        <div class="mt-3">
+          <label class="po-form-label" for="priceRemarks">Remarks <span class="po-hint">(optional)</span></label>
+          <textarea id="priceRemarks" class="form-control" rows="2" maxlength="255" placeholder="Quotation reference, delivery terms..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-center gap-3">
+        <button type="button" id="priceSubmitBtn" class="btn-custom btn-submit px-4"><i class="bi bi-send me-1"></i> Send to GM</button>
+        <button type="button" class="btn-custom btn-delete px-4" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i> Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const PO = window.PO;
+  let current = null;
+
+  PO.stats("poStats", [
+    { label: "Need Rates", icon: "bi-hourglass-split", color: "#d6961e", test: (p) => p.status === "Procurement Pending" },
+    { label: "With GM / Director", icon: "bi-person-check", color: "#1976d2", test: (p) => p.status === "GM Approval" || p.status === "Director Approval" },
+    { label: "Approved", icon: "bi-check2-circle", color: "#198754", test: (p) => p.status === "Finance Approval" || p.status === "Completed" },
+    { label: "Rejected", icon: "bi-x-octagon", color: "#c62828", test: (p) => p.status === "Rejected" },
+  ]);
+
+  PO.table("#poTable", [
+    { data: "po_number", render: (d) => `<b>${PO.esc(d)}</b>` },
+    { data: "vendor", render: (d) => PO.esc(d) },
+    { data: "created_by", render: (d) => PO.esc(d) },
+    { data: "created_at" },
+    { data: "item_count" },
+    { data: "total_amount", className: "num", render: (d) => PO.money(d) },
+    { data: "status", render: (d) => PO.chip(d) },
+    {
+      data: null, orderable: false,
+      render: (d, t, p) => `<div class="po-actions">${
+        p.status === "Procurement Pending"
+          ? `<button class="btn-custom btn-submit po-price" data-id="${p.id}"><i class="bi bi-currency-rupee"></i> Add Amount</button>` : ""
+      }${PO.viewBtn(p)}</div>`,
+    },
+  ]);
+
+  // ---------- modal ----------
+  const body = document.getElementById("priceBody");
+  const r2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+  function recalc() {
+    let total = 0;
+    body.querySelectorAll("tr[data-item]").forEach((tr) => {
+      const q = Number(tr.dataset.qty);
+      const rate = Number(tr.querySelector(".rate-input").value);
+      const amt = rate > 0 ? r2(q * rate) : 0;
+      tr.querySelector(".amt").textContent = rate > 0 ? PO.money(amt) : "—";
+      total += amt;
+    });
+    document.getElementById("priceTotal").textContent = PO.money(r2(total));
+  }
+
+  function openPrice(id) {
+    current = PO.byId[id];
+    if (!current) return;
+    document.getElementById("priceModalNo").textContent = current.po_number;
+    document.getElementById("priceVendor").textContent = current.vendor;
+    document.getElementById("priceBy").textContent = current.created_by;
+    document.getElementById("priceOn").textContent = current.created_at;
+    document.getElementById("priceRemarks").value = "";
+    body.innerHTML = current.items.map((i) => `
+      <tr data-item="${i.id}" data-qty="${PO.esc(i.quantity)}">
+        <td class="l">${PO.esc(i.material)}</td>
+        <td>${PO.esc(i.quantity)} ${PO.esc(i.unit)}</td>
+        <td><input type="text" class="form-control rate-input numeric-input" maxlength="10" inputmode="decimal" placeholder="0.00"></td>
+        <td class="r amt">—</td>
+      </tr>`).join("") +
+      `<tr class="total"><td colspan="3" class="r" style="text-align:right">Grand Total</td><td class="r" id="priceTotal">—</td></tr>`;
+    body.querySelectorAll(".rate-input").forEach((el) => el.addEventListener("input", recalc));
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("priceModal")).show();
+  }
+
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest(".po-price");
+    if (b) openPrice(Number(b.dataset.id));
+  });
+
+  document.getElementById("priceSubmitBtn").addEventListener("click", function () {
+    if (!current) return;
+    const items = [];
+    const trs = Array.from(body.querySelectorAll("tr[data-item]"));
+    for (let i = 0; i < trs.length; i++) {
+      const raw = trs[i].querySelector(".rate-input").value.trim();
+      const name = current.items[i].material;
+      if (!/^\d{1,7}(\.\d{1,2})?$/.test(raw) || Number(raw) <= 0) {
+        PO.Toast.fire({ icon: "warning", title: `Enter a valid rate for ${name} (up to 2 decimals)` });
+        trs[i].querySelector(".rate-input").focus();
+        return;
+      }
+      items.push({ item_id: trs[i].dataset.item, unit_price: raw });
+    }
+    PO.run({ action: "price", id: current.id, items: items, remarks: document.getElementById("priceRemarks").value.trim() }, this);
+  });
+})();
+</script>
+{% endblock content %}

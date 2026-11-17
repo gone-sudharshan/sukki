@@ -1,0 +1,26 @@
+{% comment %}
+  base.html  --  add ONE link inside each role's block, in BOTH menus:
+    (a) the desktop <aside class="sidebar"> menu
+    (b) the mobile <div class="offcanvas ..."> menu
+  Put it next to "Material Requests" / "Orders" so it is easy to find.
+{% endcomment %}
+
+{# ---------- Stores ---------- #}
+<a href="{% url 'po_request_stores' %}" class="{% if request.resolver_match.url_name == 'po_request_stores' %}active{% endif %}">
+  <i class="bi bi-cart-plus"></i> <span>Purchase Requests</span>
+</a>
+
+{# ---------- Procurement ---------- #}
+<a href="{% url 'po_request_procurement' %}" class="{% if request.resolver_match.url_name == 'po_request_procurement' %}active{% endif %}">
+  <i class="bi bi-journal-check"></i> <span>PO Requests</span>
+</a>
+
+{# ---------- GM / Director ---------- #}
+<a href="{% url 'po_request_approvals' %}" class="nav-link {% if request.resolver_match.url_name == 'po_request_approvals' %}active{% endif %}">
+  <i class="bi bi-patch-check"></i> <span>PO Approvals</span>
+</a>
+
+{# ---------- Finance ---------- #}
+<a href="{% url 'po_request_finance' %}" class="{% if request.resolver_match.url_name == 'po_request_finance' %}active{% endif %}">
+  <i class="bi bi-cash-coin"></i> <span>PO Requests</span>
+</a>

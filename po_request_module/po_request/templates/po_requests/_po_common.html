@@ -1,0 +1,266 @@
+{% comment %}
+  Shared by all four PO Request pages.
+  Provides: styles, the detail offcanvas, the data blob and the window.PO helper.
+{% endcomment %}
+<style>
+  /* ===== stat strip ===== */
+  .po-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .8rem; margin-bottom: 1rem; }
+  .po-stat {
+    display: flex; align-items: center; gap: .85rem; padding: .85rem 1rem; border-radius: 14px;
+    background: #fff; border: 1px solid #e6efe9; box-shadow: 0 2px 10px rgba(58, 99, 81, .08);
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .po-stat:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(58, 99, 81, .15); }
+  .po-stat-ico {
+    width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 1.2rem; background: var(--c, #3a6351); flex-shrink: 0;
+  }
+  .po-stat-num { font-size: 1.45rem; font-weight: 700; line-height: 1.1; color: #24413a; }
+  .po-stat-lbl { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #6b7f74; }
+
+  /* ===== cards ===== */
+  .po-card { border: 1px solid #e6efe9 !important; border-radius: 14px !important; overflow: hidden; background: #fff; margin-bottom: 1rem; }
+  .po-card-head {
+    display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap;
+    padding: .7rem 1rem; background: linear-gradient(90deg, #3a6351, #5d8f78); color: #fff;
+  }
+  .po-card-head h5 { margin: 0; font-size: 1rem; font-weight: 700; }
+  .po-card-body { padding: 1rem; }
+
+  /* ===== status chips ===== */
+  .po-chip {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 12px; border-radius: 14px;
+    font-size: 11px; font-weight: 700; white-space: nowrap; border: 1px solid transparent;
+  }
+  .po-chip-pending  { background: #fff8e1; color: #b58100; border-color: #f0d98a; }
+  .po-chip-gm       { background: #e3f2fd; color: #1976d2; border-color: #a9d0f5; }
+  .po-chip-director { background: #e8eaf6; color: #3949ab; border-color: #b6bde8; }
+  .po-chip-finance  { background: #f3e5f5; color: #7b1fa2; border-color: #d9b3e3; }
+  .po-chip-ok       { background: #e8f7ee; color: #198754; border-color: #a8dcbf; }
+  .po-chip-bad      { background: #ffebee; color: #c62828; border-color: #f0b3b9; }
+  .po-chip-pending::before, .po-chip-gm::before, .po-chip-director::before, .po-chip-finance::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: poPulse 1.5s infinite;
+  }
+  @keyframes poPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.6); opacity: .4; } }
+
+  /* ===== DataTable look (same as the other pages) ===== */
+  table.dataTable { border: none; border-collapse: collapse; width: 100% !important; margin: 0 !important; }
+  table.dataTable thead th {
+    border-bottom: 2px solid #7bc69a; background-color: #3a6351; color: #fff; font-weight: 600; text-align: center; padding: 8px 6px;
+  }
+  table.dataTable tbody td {
+    border-bottom: 1px solid #d0d0d0; padding: 7px 12px; text-align: center; color: var(--green-dark, #3a6351);
+    font-size: .93rem; vertical-align: middle;
+  }
+  table.dataTable.stripe tbody tr.odd  { background-color: #ffffff !important; }
+  table.dataTable.stripe tbody tr.even { background-color: #eef3f0 !important; }
+  table.dataTable > tbody > tr:not(.child):hover > td { background-color: #cfe9da !important; transition: background-color .15s ease; }
+  table.dataTable td.num { text-align: right; padding-right: 18px; white-space: nowrap; }
+  .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate { margin: .25rem .5rem; font-size: .75rem; color: #3a6351; font-weight: 500; }
+  .dataTables_wrapper .dataTables_filter input { border: 1px solid #3a6351; border-radius: 6px; padding: 4px 8px; margin-left: 6px; background: #f0f0f0; color: #3a6351; max-width: 160px; }
+  .dataTables_wrapper .dataTables_length select { border: 1px solid #3a6351; border-radius: 6px; padding: 2px 12px; background: #a8d5ba; color: #3a6351; }
+  .dataTables_wrapper .dataTables_paginate .paginate_button .page-link {
+    background: #7bc69a; color: #3a6351 !important; border: 1px solid #3a6351; border-radius: 6px; padding: 4px 10px; margin: 0 2px; font-size: .72rem;
+  }
+  .dataTables_wrapper .dataTables_paginate .paginate_button.active .page-link { background: #3a6351 !important; color: #fff !important; }
+  .dataTables_wrapper .dataTables_paginate .paginate_button { margin: 0; padding: 0; }
+
+  /* ===== action buttons ===== */
+  .po-actions { display: inline-flex; gap: .35rem; flex-wrap: wrap; justify-content: center; }
+  .po-actions .btn-custom { padding: 3px 12px; font-size: .78rem; }
+
+  /* ===== detail offcanvas ===== */
+  #poDetailCanvas { width: min(580px, 96vw) !important; }
+  #poDetailCanvas .offcanvas-header { background: #3a6351; color: #fff; }
+  #poDetailCanvas .offcanvas-title { color: #fff; font-weight: 700; }
+  .po-meta { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem 1rem; margin-bottom: 1rem; }
+  .po-meta label { display: block; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #6b7f74; margin-bottom: 1px; }
+  .po-meta .v { font-weight: 600; color: #24413a; word-break: break-word; }
+  .po-sec-title { color: #3a6351; font-weight: 700; padding-bottom: 4px; margin: 1rem 0 .5rem; border-bottom: 2px solid #7bc69a; font-size: .95rem; }
+  .po-items { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  .po-items th { background: #3a6351; color: #fff; padding: 6px 8px; text-align: center; font-weight: 600; }
+  .po-items td { border-bottom: 1px solid #e3e3e3; padding: 6px 8px; text-align: center; }
+  .po-items td.l { text-align: left; }
+  .po-items td.r, .po-items th.r { text-align: right; }
+  .po-items tr.total td { background: #dcebe2; font-weight: 700; color: #1f4535; border-top: 2px solid #3a6351; }
+
+  .po-trail { list-style: none; margin: 0; padding: 0 0 0 4px; }
+  .po-trail li { position: relative; padding: 0 0 14px 26px; }
+  .po-trail li::before { content: ""; position: absolute; left: 6px; top: 16px; bottom: 0; width: 2px; background: #cfe3d7; }
+  .po-trail li:last-child::before { display: none; }
+  .po-trail li::after {
+    content: ""; position: absolute; left: 0; top: 4px; width: 14px; height: 14px; border-radius: 50%;
+    background: #198754; box-shadow: 0 0 0 3px #e8f7ee;
+  }
+  .po-trail li.bad::after { background: #c62828; box-shadow: 0 0 0 3px #ffebee; }
+  .po-trail .st { font-weight: 700; color: #24413a; font-size: .88rem; }
+  .po-trail .by { font-size: .78rem; color: #6b7f74; }
+  .po-trail .rm { font-size: .8rem; color: #444; background: #f6f9f7; border-left: 3px solid #7bc69a; padding: 3px 8px; margin-top: 3px; border-radius: 0 6px 6px 0; word-break: break-word; }
+  .po-reject-box { background: #ffebee; border: 1px solid #f0b3b9; color: #c62828; border-radius: 10px; padding: .6rem .8rem; font-size: .88rem; margin-top: .8rem; word-break: break-word; }
+  .po-wait-box { background: #fff8e1; border: 1px dashed #e0c36a; color: #8a6100; border-radius: 10px; padding: .55rem .8rem; font-size: .85rem; margin-top: .8rem; }
+
+  .po-form-label { font-weight: 700; color: #3a6351; font-size: .85rem; margin-bottom: 4px; display: block; }
+  .choices__inner { min-height: 40px; background-color: #fff !important; }
+  .choices__list--dropdown .choices__list { max-height: 240px !important; overflow-y: auto !important; }
+</style>
+
+{% csrf_token %}
+{{ po_data|json_script:"po-data" }}
+
+<!-- Detail panel (shared) -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="poDetailCanvas" aria-labelledby="poDetailTitle">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="poDetailTitle"><i class="bi bi-receipt me-2"></i><span id="poDetailNo"></span></h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body" id="poDetailBody"></div>
+</div>
+
+<script>
+window.PO = (function () {
+  const data = JSON.parse(document.getElementById("po-data").textContent || "[]");
+  const byId = {};
+  data.forEach((p) => { byId[p.id] = p; });
+
+  const Toast = Swal.mixin({
+    toast: true, position: "top-end", showConfirmButton: false, showCloseButton: true,
+    timer: 3200, timerProgressBar: true,
+    didOpen: (t) => { t.addEventListener("mouseenter", Swal.stopTimer); t.addEventListener("mouseleave", Swal.resumeTimer); },
+  });
+
+  const esc = (s) => String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+  const money = (v) => (v === "" || v == null)
+    ? "—"
+    : "₹" + Number(v).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const CHIP = {
+    "Procurement Pending": "pending", "GM Approval": "gm", "Director Approval": "director",
+    "Finance Approval": "finance", "Completed": "ok", "Rejected": "bad",
+  };
+  const chip = (status) => `<span class="po-chip po-chip-${CHIP[status] || "pending"}">${esc(status)}</span>`;
+
+  const csrf = () => document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  // POST JSON to this page's own URL
+  function post(payload) {
+    return fetch(window.location.pathname, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrf() },
+      body: JSON.stringify(payload),
+    })
+      .then((res) => res.json().catch(() => ({ error: "Unexpected server response." })).then((j) => ({ ok: res.ok, j })))
+      .catch(() => ({ ok: false, j: { error: "Network error. Please try again." } }));
+  }
+
+  // run an action, show the message, reload the page on success
+  function run(payload, btn) {
+    if (btn && typeof disableSubmitBtn === "function") disableSubmitBtn(btn);
+    return post(payload).then(({ ok, j }) => {
+      if (ok && j.success) {
+        Toast.fire({ icon: "success", title: j.message || "Done" });
+        setTimeout(() => window.location.reload(), 900);
+        return true;
+      }
+      Toast.fire({ icon: "error", title: j.error || "Something went wrong" });
+      if (btn && typeof enableSubmitBtn === "function") enableSubmitBtn(btn);
+      return false;
+    });
+  }
+
+  function stats(elId, defs) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML = defs.map((d) => `
+      <div class="po-stat" style="--c:${d.color}">
+        <div class="po-stat-ico"><i class="bi ${d.icon}"></i></div>
+        <div><div class="po-stat-num">${data.filter(d.test).length}</div><div class="po-stat-lbl">${esc(d.label)}</div></div>
+      </div>`).join("");
+  }
+
+  function showDetail(id) {
+    const p = byId[id];
+    if (!p) return;
+    document.getElementById("poDetailNo").textContent = p.po_number;
+
+    const priced = p.items.some((i) => i.unit_price !== "");
+    const rows = p.items.map((i) => `
+      <tr>
+        <td class="l">${esc(i.material)}</td>
+        <td>${esc(i.quantity)} ${esc(i.unit)}</td>
+        ${priced ? `<td class="r">${money(i.unit_price)}</td><td class="r">${money(i.amount)}</td>` : ""}
+      </tr>`).join("");
+    const total = priced
+      ? `<tr class="total"><td colspan="3" class="r">Total</td><td class="r">${money(p.total_amount)}</td></tr>` : "";
+
+    const trail = p.trail.map((t) => `
+      <li class="${t.state === "bad" ? "bad" : ""}">
+        <div class="st">${esc(t.stage)}</div>
+        <div class="by">${esc(t.by)} &middot; ${esc(t.at)}</div>
+        ${t.remarks ? `<div class="rm">${esc(t.remarks)}</div>` : ""}
+      </li>`).join("");
+
+    const waiting = {
+      "Procurement Pending": "Waiting for Procurement to add the rates.",
+      "GM Approval": "Waiting for GM approval.",
+      "Director Approval": "Waiting for Director approval.",
+      "Finance Approval": "Approved. Waiting for Finance.",
+    }[p.status];
+
+    document.getElementById("poDetailBody").innerHTML = `
+      <div class="po-meta">
+        <div><label>Vendor</label><div class="v">${esc(p.vendor)}</div></div>
+        <div><label>Status</label><div class="v">${chip(p.status)}</div></div>
+        <div><label>Raised by</label><div class="v">${esc(p.created_by)}</div></div>
+        <div><label>Raised on</label><div class="v">${esc(p.created_at)}</div></div>
+      </div>
+      <div class="po-sec-title">Raw Materials</div>
+      <table class="po-items">
+        <thead><tr><th class="l">Material</th><th>Quantity</th>${priced ? '<th class="r">Rate</th><th class="r">Amount</th>' : ""}</tr></thead>
+        <tbody>${rows}${total}</tbody>
+      </table>
+      <div class="po-sec-title">Approval Trail</div>
+      <ul class="po-trail">${trail}</ul>
+      ${p.status === "Rejected" && p.rejected_reason ? `<div class="po-reject-box"><b>Rejected:</b> ${esc(p.rejected_reason)}</div>` : ""}
+      ${waiting ? `<div class="po-wait-box"><i class="bi bi-hourglass-split me-1"></i>${waiting}</div>` : ""}`;
+
+    bootstrap.Offcanvas.getOrCreateInstance(document.getElementById("poDetailCanvas")).show();
+  }
+
+  // shared DataTable defaults
+  function table(selector, columns, extra) {
+    return $(selector).DataTable(Object.assign({
+      data: data,
+      columns: columns,
+      order: [],                       // keep newest-first order from the server
+      pageLength: 10,
+      lengthMenu: [[5, 10, 25, 50, 100], [5, 10, 25, 50, 100]],
+      autoWidth: false,
+      responsive: true,
+      language: {
+        emptyTable: "⚠️ No Data Available", zeroRecords: "No matching records found",
+        search: "Search:", lengthMenu: "Show _MENU_ entries",
+      },
+    }, extra || {}));
+  }
+
+  const viewBtn = (p) => `<button class="btn-custom btn-submit po-view" data-id="${p.id}"><i class="bi bi-eye"></i> View</button>`;
+
+  // click on any .po-view button opens the detail panel
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest(".po-view");
+    if (b) showDetail(Number(b.dataset.id));
+  });
+
+  // deep link from a notification: ?po=POR-...
+  const q = new URLSearchParams(window.location.search).get("po");
+  if (q) {
+    const hit = data.find((p) => p.po_number === q);
+    if (hit) setTimeout(() => showDetail(hit.id), 350);
+  }
+
+  return { data, byId, Toast, esc, money, chip, post, run, stats, showDetail, table, viewBtn };
+})();
+</script>

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %} PO Requests {% endblock title %}
+{% block content %}
+{% include "po_requests/_po_common.html" %}
+
+<div class="procurement-page mt-1">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 mb-2">
+    <h2><i class="bi bi-cash-coin"></i> PO Requests</h2>
+  </div>
+
+  <div id="poStats" class="po-stats"></div>
+
+  <div class="card po-card shadow-sm">
+    <div class="po-card-head">
+      <h5><i class="bi bi-table me-2"></i>Approved Purchase Orders</h5>
+      <span style="color:#dcebe2;font-size:.78rem">Approved by GM and Director</span>
+    </div>
+    <div class="po-card-body">
+      <div class="table-responsive">
+        <table id="poTable" class="display stripe hover nowrap w-100"><thead>
+          <tr><th>PO Number</th><th>Vendor</th><th>Materials</th><th>Total</th><th>Approved By</th><th>Raised At</th><th>Status</th><th>Action</th></tr>
+        </thead></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const PO = window.PO;
+
+  PO.stats("poStats", [
+    { label: "Waiting for Finance", icon: "bi-hourglass-split", color: "#7b1fa2", test: (p) => p.status === "Finance Approval" },
+    { label: "Processed", icon: "bi-check2-circle", color: "#198754", test: (p) => p.status === "Completed" },
+    { label: "Total", icon: "bi-collection", color: "#3a6351", test: () => true },
+  ]);
+
+  const approvers = (p) => p.trail
+    .filter((t) => t.stage.indexOf("Approved by") === 0)
+    .map((t) => `${PO.esc(t.stage.replace("Approved by ", ""))}: ${PO.esc(t.by)}`).join("<br>");
+
+  PO.table("#poTable", [
+    { data: "po_number", render: (d) => `<b>${PO.esc(d)}</b>` },
+    { data: "vendor", render: (d) => PO.esc(d) },
+    { data: "item_count" },
+    { data: "total_amount", className: "num", render: (d) => PO.money(d) },
+    { data: null, render: (d, t, p) => `<span style="font-size:.82rem">${approvers(p)}</span>` },
+    { data: "created_at" },
+    { data: "status", render: (d) => PO.chip(d) },
+    {
+      data: null, orderable: false,
+      render: (d, t, p) => `<div class="po-actions">${
+        p.status === "Finance Approval"
+          ? `<button class="btn-custom btn-submit po-process" data-id="${p.id}"><i class="bi bi-check2-circle"></i> Mark Processed</button>` : ""
+      }${PO.viewBtn(p)}</div>`,
+    },
+  ]);
+
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest(".po-process");
+    if (!b) return;
+    const p = PO.byId[Number(b.dataset.id)];
+    Swal.fire({
+      title: `Mark ${p.po_number} as processed?`,
+      html: `<div style="text-align:left;font-size:.9rem"><b>${PO.esc(p.vendor)}</b> &middot; ${PO.money(p.total_amount)}</div>`,
+      input: "textarea", inputLabel: "Remarks (optional)", inputAttributes: { maxlength: 255 },
+      showCancelButton: true, confirmButtonText: "Mark Processed", confirmButtonColor: "#3a6351", reverseButtons: true,
+    }).then((r) => {
+      if (r.isConfirmed) PO.run({ action: "process", id: p.id, remarks: (r.value || "").trim() }, b);
+    });
+  });
+})();
+</script>
+{% endblock content %}

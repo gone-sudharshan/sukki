@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %} PO Approvals {% endblock title %}
+{% block content %}
+{% include "po_requests/_po_common.html" %}
+
+<div class="procurement-page mt-1">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 mb-2">
+    <h2><i class="bi bi-patch-check"></i> PO Approvals <small class="text-muted fs-6">({{ role }})</small></h2>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" id="onlyMine">
+      <label class="form-check-label fw-semibold" for="onlyMine" style="color:#3a6351">Show only waiting for me</label>
+    </div>
+  </div>
+
+  <div id="poStats" class="po-stats"></div>
+
+  <div class="card po-card shadow-sm">
+    <div class="po-card-head"><h5><i class="bi bi-table me-2"></i>Purchase Order Requests</h5></div>
+    <div class="po-card-body">
+      <div class="table-responsive">
+        <table id="poTable" class="display stripe hover nowrap w-100"><thead>
+          <tr><th>PO Number</th><th>Vendor</th><th>Raised By</th><th>Created At</th><th>Materials</th><th>Total</th><th>Status</th><th>Action</th></tr>
+        </thead></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const PO = window.PO;
+  const PENDING = "{{ pending_status }}";          // the status this role can decide on
+  const ROLE = "{{ role }}";
+
+  PO.stats("poStats", [
+    { label: "Waiting for me", icon: "bi-hourglass-split", color: "#d6961e", test: (p) => p.status === PENDING },
+    { label: ROLE === "GM" ? "Sent to Director" : "Sent to Finance", icon: "bi-check2-circle", color: "#198754",
+      test: (p) => ROLE === "GM" ? (p.status === "Director Approval" || p.status === "Finance Approval" || p.status === "Completed") : (p.status === "Finance Approval" || p.status === "Completed") },
+    { label: "Rejected", icon: "bi-x-octagon", color: "#c62828", test: (p) => p.status === "Rejected" },
+    { label: "Total", icon: "bi-collection", color: "#3a6351", test: () => true },
+  ]);
+
+  const dt = PO.table("#poTable", [
+    { data: "po_number", render: (d) => `<b>${PO.esc(d)}</b>` },
+    { data: "vendor", render: (d) => PO.esc(d) },
+    { data: "created_by", render: (d) => PO.esc(d) },
+    { data: "created_at" },
+    { data: "item_count" },
+    { data: "total_amount", className: "num", render: (d) => PO.money(d) },
+    { data: "status", render: (d) => PO.chip(d) },
+    {
+      data: null, orderable: false,
+      render: (d, t, p) => `<div class="po-actions">${
+        p.status === PENDING
+          ? `<button class="btn-custom btn-submit po-approve" data-id="${p.id}"><i class="bi bi-check-lg"></i> Approve</button>
+             <button class="btn-custom btn-delete po-reject" data-id="${p.id}"><i class="bi bi-x-lg"></i> Reject</button>` : ""
+      }${PO.viewBtn(p)}</div>`,
+    },
+  ]);
+
+  // "only waiting for me" filter on the Status column
+  document.getElementById("onlyMine").addEventListener("change", function () {
+    dt.column(6).search(this.checked ? PENDING : "", false, false).draw();
+  });
+
+  function decide(kind, id, btn) {
+    const p = PO.byId[id];
+    const approve = kind === "approve";
+    Swal.fire({
+      title: approve ? `Approve ${p.po_number}?` : `Reject ${p.po_number}?`,
+      html: `<div style="text-align:left;font-size:.9rem">
+               <b>${PO.esc(p.vendor)}</b> &middot; ${PO.money(p.total_amount)}
+             </div>`,
+      input: "textarea",
+      inputLabel: approve ? "Remarks (optional)" : "Reason for rejection (required)",
+      inputAttributes: { maxlength: 255 },
+      showCancelButton: true,
+      confirmButtonText: approve ? "Approve" : "Reject",
+      confirmButtonColor: approve ? "#3a6351" : "#c62828",
+      reverseButtons: true,
+      inputValidator: (v) => (!approve && (!v || v.trim().length < 3)) ? "Please enter a reason (at least 3 characters)" : undefined,
+    }).then((r) => {
+      if (!r.isConfirmed) return;
+      PO.run({ action: kind, id: id, remarks: (r.value || "").trim() }, btn);
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest(".po-approve"), r = e.target.closest(".po-reject");
+    if (a) decide("approve", Number(a.dataset.id), a);
+    if (r) decide("reject", Number(r.dataset.id), r);
+  });
+})();
+</script>
+{% endblock content %}
